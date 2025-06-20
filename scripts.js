@@ -176,4 +176,3 @@ function setupModalEvents() {
     }, 500);
   });
 }
-
