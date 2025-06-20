@@ -137,18 +137,6 @@ function filterGraph() {
 }
 
 
-    if (match) {
-      network.focus(node.id, {
-        scale: 1.5,
-        animation: {
-          duration: 500,
-          easingFunction: "easeInOutQuad"
-        }
-      });
-    }
-  });
-}
-
 function setupModalEvents() {
   network.on("click", function (params) {
     if (params.nodes.length > 0) {
