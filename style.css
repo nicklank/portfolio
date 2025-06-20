@@ -1,1 +1,77 @@
-yea
+/* General Page Styling */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Helvetica Neue', sans-serif;
+  background-color: #0d0d0d;
+  color: #e0e0e0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#filterInput {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 16px;
+  background-color: #1e1e1e;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+/* Graph container */
+#network {
+  width: 100%;
+  height: 100vh;
+}
+
+/* Modal overlay */
+#modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.8);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Modal content area */
+#modal-content {
+  position: relative;
+  width: 80%;
+  height: 80%;
+  background-color: #121212;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 30px rgba(0, 255, 180, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Iframe */
+#project-frame {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+}
+
+/* Close button */
+#close-modal {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 28px;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  z-index: 101;
+}
