@@ -1,89 +1,23 @@
-<!-- Save this as index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Graph Portfolio</title>
+  <link rel="stylesheet" href="style.css" />
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: #0e0e0e;
-      font-family: sans-serif;
-    }
-
-    #graph {
-      width: 100%;
-      height: 100%;
-      border: 1px solid #222;
-    }
-  </style>
 </head>
 <body>
-  <div id="graph"></div>
+  <input type="text" id="filterInput" placeholder="Filter by tag (e.g. 2025)" />
+  <div id="network"></div>
 
-  <script>
-    const nodes = new vis.DataSet([
-      { id: 1, label: "Home", shape: "box", color: "#89ffb8" },
-      { id: 2, label: "Solar Chair", group: "2023" },
-      { id: 3, label: "Rhino", group: "software" },
-      { id: 4, label: "Digital", group: "type" },
-      { id: 5, label: "Physical", group: "type" },
-      { id: 6, label: "2023", group: "year" },
-      { id: 7, label: "Flowerpot Table" },
-    ]);
+  <div id="modal">
+    <div id="modal-content">
+      <button id="close-modal">×</button>
+      <iframe id="project-frame" src="" frameborder="0"></iframe>
+    </div>
+  </div>
 
-    const edges = new vis.DataSet([
-      { from: 1, to: 2 },
-      { from: 2, to: 3 },
-      { from: 2, to: 4 },
-      { from: 2, to: 6 },
-      { from: 7, to: 5 },
-      { from: 7, to: 6 },
-    ]);
-
-    const container = document.getElementById("graph");
-    const data = { nodes, edges };
-    const options = {
-      physics: {
-        stabilization: false,
-        barnesHut: {
-          gravitationalConstant: -30000,
-          springLength: 200
-        }
-      },
-      nodes: {
-        shape: "dot",
-        size: 20,
-        font: {
-          color: "#ffffff",
-          size: 16
-        },
-        borderWidth: 2,
-        color: {
-          background: "#444",
-          border: "#89ffb8",
-          highlight: {
-            background: "#89ffb8",
-            border: "#ffffff"
-          }
-        }
-      },
-      edges: {
-        color: "#777",
-        width: 2,
-        smooth: true
-      },
-      interaction: {
-        hover: true,
-        tooltipDelay: 50,
-        dragNodes: true,
-        hideEdgesOnDrag: false
-      }
-    };
-
-    new vis.Network(container, data, options);
-  </script>
+  <script src="scripts.js"></script>
 </body>
 </html>
