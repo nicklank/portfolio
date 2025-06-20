@@ -92,6 +92,8 @@ function filterGraph() {
   const year = document.getElementById("yearSelect").value;
   const category = document.getElementById("categorySelect").value;
 
+  let firstMatchedNode = null;
+
   nodes.forEach((node) => {
     const project = projects.find((p) => p.id === node.id);
     const tags = project.tags.map((t) => t.toLowerCase());
@@ -101,6 +103,10 @@ function filterGraph() {
     const matchesCategory = !category || tags.includes(category);
 
     const match = matchesMaterial && matchesYear && matchesCategory;
+
+    if (match && !firstMatchedNode) {
+      firstMatchedNode = node.id;
+    }
 
     nodes.update({
       id: node.id,
@@ -117,6 +123,19 @@ function filterGraph() {
             highlight: { background: "#333", border: "#aaa" }
           }
     });
+  });
+
+  if (firstMatchedNode) {
+    network.focus(firstMatchedNode, {
+      scale: 1.5,
+      animation: {
+        duration: 500,
+        easingFunction: "easeInOutQuad"
+      }
+    });
+  }
+}
+
 
     if (match) {
       network.focus(node.id, {
