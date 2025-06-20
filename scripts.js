@@ -135,13 +135,48 @@ function setupModalEvents() {
     if (params.nodes.length > 0) {
       const nodeId = params.nodes[0];
       const project = projects.find((p) => p.id === nodeId);
-      if (project) {
-        const iframe = document.getElementById("project-frame");
+      if (!project) return;
+
+      const bubble = document.getElementById("modal-bubble");
+      const modal = document.getElementById("modal");
+      const iframe = document.getElementById("project-frame");
+
+      // Get canvas coordinates of clicked node
+      const pos = network.getPositions([nodeId])[nodeId];
+      const canvasPos = network.canvasToDOM(pos);
+
+      // Set initial bubble position/size
+      bubble.style.top = canvasPos.y + "px";
+      bubble.style.left = canvasPos.x + "px";
+      bubble.classList.remove("expanded");
+
+      // Show the modal
+      modal.style.display = "flex";
+
+      // Force layout refresh then expand
+      requestAnimationFrame(() => {
+        bubble.classList.add("expanded");
+        bubble.style.top = "10vh";
+        bubble.style.left = "10vw";
         iframe.src = project.url;
-        document.getElementById("modal").style.display = "flex";
-      }
+      });
     }
   });
+
+  document.getElementById("close-modal").addEventListener("click", () => {
+    const bubble = document.getElementById("modal-bubble");
+    const iframe = document.getElementById("project-frame");
+
+    bubble.classList.remove("expanded");
+
+    // Give time for animation before hiding
+    setTimeout(() => {
+      document.getElementById("modal").style.display = "none";
+      iframe.src = "";
+    }, 500);
+  });
+}
+
 
   document.getElementById("close-modal").addEventListener("click", () => {
     document.getElementById("modal").style.display = "none";
