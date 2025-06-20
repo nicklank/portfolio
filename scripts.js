@@ -177,9 +177,3 @@ function setupModalEvents() {
   });
 }
 
-
-  document.getElementById("close-modal").addEventListener("click", () => {
-    document.getElementById("modal").style.display = "none";
-    document.getElementById("project-frame").src = "";
-  });
-}
