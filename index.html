@@ -8,7 +8,31 @@
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
-  <input type="text" id="filterInput" placeholder="Filter by tag (e.g. 2025)" />
+<div id="filters">
+  <select id="materialSelect">
+    <option value="">Material</option>
+    <option value="wood">Wood</option>
+    <option value="metal">Metal</option>
+    <option value="cloth">Cloth</option>
+    <option value="plastic">Plastic</option>
+  </select>
+
+  <select id="yearSelect">
+    <option value="">Year</option>
+    <option value="2023">2023</option>
+    <option value="2024">2024</option>
+    <option value="2025">2025</option>
+  </select>
+
+  <select id="categorySelect">
+    <option value="">Category</option>
+    <option value="graphic design">Graphic Design</option>
+    <option value="video">Video</option>
+    <option value="music">Music</option>
+    <option value="product">Product</option>
+  </select>
+</div>
+
   <div id="network"></div>
 
   <div id="modal">
