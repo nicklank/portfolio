@@ -82,28 +82,54 @@ function buildGraph() {
 
 function setupInteractivity() {
   // Filter function
-  document.getElementById("filterInput").addEventListener("input", (e) => {
-    const term = e.target.value.toLowerCase();
-    nodes.forEach((node) => {
-      const project = projects.find((p) => p.id === node.id);
-      const match = project.tags.some((tag) =>
-        tag.toLowerCase().includes(term)
-      );
-      nodes.update({
-        id: node.id,
-        value: match ? 30 : 10,
-        color: match
-          ? {
-              background: "#89ffb8",
-              border: "#ffffff",
-              highlight: { background: "#ffffff", border: "#89ffb8" }
-            }
-          : {
-              background: "#1f1f1f",
-              border: "#666666",
-              highlight: { background: "#333", border: "#aaa" }
-            }
+// Filter on dropdown change
+["materialSelect", "yearSelect", "categorySelect"].forEach((id) => {
+  document.getElementById(id).addEventListener("change", filterGraph);
+});
+
+function filterGraph() {
+  const material = document.getElementById("materialSelect").value;
+  const year = document.getElementById("yearSelect").value;
+  const category = document.getElementById("categorySelect").value;
+
+  nodes.forEach((node) => {
+    const project = projects.find((p) => p.id === node.id);
+    const tags = project.tags.map((t) => t.toLowerCase());
+
+    const matchesMaterial = !material || tags.includes(material);
+    const matchesYear = !year || tags.includes(year);
+    const matchesCategory = !category || tags.includes(category);
+
+    const match = matchesMaterial && matchesYear && matchesCategory;
+
+    nodes.update({
+      id: node.id,
+      value: match ? 30 : 10,
+      color: match
+        ? {
+            background: "#89ffb8",
+            border: "#ffffff",
+            highlight: { background: "#ffffff", border: "#89ffb8" }
+          }
+        : {
+            background: "#1f1f1f",
+            border: "#666666",
+            highlight: { background: "#333", border: "#aaa" }
+          }
+    });
+
+    if (match) {
+      network.focus(node.id, {
+        scale: 1.5,
+        animation: {
+          duration: 500,
+          easingFunction: "easeInOutQuad"
+        }
       });
+    }
+  });
+}
+
 
       if (match) {
         network.focus(node.id, {
