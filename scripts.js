@@ -5,16 +5,17 @@ const tagMap = {};
 let network;
 let projects = [];
 
-// Fetch projects.json and initialize graph
+// Fetch project data
 fetch("projects.json")
   .then((res) => res.json())
   .then((data) => {
     projects = data;
     buildGraph();
+    setupFilters(); // only run after graph is built
   });
 
 function buildGraph() {
-  // Add nodes
+  // Build nodes
   projects.forEach((project) => {
     nodes.add({
       id: project.id,
@@ -30,24 +31,24 @@ function buildGraph() {
       font: {
         color: "#ffffff"
       },
-      value: 10 // default size
+      value: 10
     });
 
-    // Build tag map for edges
+    // Tag map for edge connections
     project.tags.forEach((tag) => {
       if (!tagMap[tag]) tagMap[tag] = [];
       tagMap[tag].push(project.id);
     });
   });
 
-  // Add edges between projects with shared tags
+  // Build edges
   for (let tag in tagMap) {
-    const relatedProjects = tagMap[tag];
-    for (let i = 0; i < relatedProjects.length; i++) {
-      for (let j = i + 1; j < relatedProjects.length; j++) {
+    const related = tagMap[tag];
+    for (let i = 0; i < related.length; i++) {
+      for (let j = i + 1; j < related.length; j++) {
         edges.add({
-          from: relatedProjects[i],
-          to: relatedProjects[j],
+          from: related[i],
+          to: related[j],
           color: { color: "#777" }
         });
       }
@@ -77,15 +78,14 @@ function buildGraph() {
   };
 
   network = new vis.Network(container, data, options);
-  setupInteractivity();
+  setupModalEvents();
 }
 
-function setupInteractivity() {
-  // Filter function
-// Filter on dropdown change
-["materialSelect", "yearSelect", "categorySelect"].forEach((id) => {
-  document.getElementById(id).addEventListener("change", filterGraph);
-});
+function setupFilters() {
+  ["materialSelect", "yearSelect", "categorySelect"].forEach((id) => {
+    document.getElementById(id).addEventListener("change", filterGraph);
+  });
+}
 
 function filterGraph() {
   const material = document.getElementById("materialSelect").value;
@@ -130,20 +130,7 @@ function filterGraph() {
   });
 }
 
-
-      if (match) {
-        network.focus(node.id, {
-          scale: 1.5,
-          animation: {
-            duration: 500,
-            easingFunction: "easeInOutQuad"
-          }
-        });
-      }
-    });
-  });
-
-  // Modal on node click
+function setupModalEvents() {
   network.on("click", function (params) {
     if (params.nodes.length > 0) {
       const nodeId = params.nodes[0];
