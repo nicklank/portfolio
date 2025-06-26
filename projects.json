@@ -10,7 +10,11 @@
             "cloth",
             "product"
         ],
-        "url": "https://nicklankau.squarespace.com/activest"
+        "description": "A Project about sustainable softgoods and activism.",
+        "images": [
+            "image1.jpg",
+            "image2.jpg"
+        ]
     },
     {
         "id": "archive-bag",
