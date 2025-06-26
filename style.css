@@ -17,7 +17,7 @@ body::before {
   pointer-events: none;
   background-image: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
   background-size: 100px 100px;
-  opacity: 0.05;
+  opacity: 0.2;
   animation: grain 0.3s steps(10) infinite;
   z-index: 1;
 }
@@ -30,7 +30,7 @@ body::after {
   pointer-events: none;
   background-image: radial-gradient(#555 1px, transparent 1px);
   background-size: 20px 20px;
-  opacity: 0.05;
+  opacity: 0.2;
   z-index: 0;
 }
 
