@@ -20,6 +20,9 @@ fetch("projects.json")
     projects = data;
     buildGraph();
     setupFilters();
+    setupDragParallax();
+    initBackground(); // Initialize dot matrix
+    startNodeFloating(); // Add subtle floating effect
   });
 
 function buildGraph() {
@@ -31,16 +34,12 @@ function buildGraph() {
       color: {
         background: "#1f1f1f",
         border: "#89ffb8",
-        highlight: {
-          background: "#89ffb8",
-          border: "#ffffff"
-        }
+        highlight: { background: "#89ffb8", border: "#ffffff" }
       },
       font: { color: "#ffffff" },
       value: 10
     });
 
-    // Build tag map for edges
     project.tags.forEach((tag) => {
       if (!tagMap[tag]) tagMap[tag] = [];
       tagMap[tag].push(project.id);
@@ -63,10 +62,6 @@ function buildGraph() {
 
   const data = { nodes, edges };
 
-  // ============================
-  // Physics and Styling Options
-  // ============================
-
   const options = {
     physics: {
       stabilization: false,
@@ -76,24 +71,13 @@ function buildGraph() {
         springConstant: 0.02
       }
     },
-    interaction: {
-      hover: true,
-      dragNodes: true
-    },
-    nodes: {
-      shape: "dot",
-      size: 15
-    },
-    edges: {
-      smooth: {
-        type: "curvedCCW", //slightly consistent curvature
-        roundness: 0.05 //subtle curve
-    }
+    interaction: { hover: true, dragNodes: true },
+    nodes: { shape: "dot", size: 15 },
+    edges: { smooth: { type: "curvedCCW", roundness: 0.05 } }
   };
 
   network = new vis.Network(container, data, options);
   setupModalEvents();
-  setupDragParallax();
 }
 
 // ==============================
@@ -131,24 +115,13 @@ function filterGraph() {
       id: node.id,
       value: match ? 30 : 10,
       color: match
-        ? {
-            background: "#89ffb8",
-            border: "#ffffff",
-            highlight: { background: "#ffffff", border: "#89ffb8" }
-          }
-        : {
-            background: "#1f1f1f",
-            border: "#666666",
-            highlight: { background: "#333", border: "#aaa" }
-          }
+        ? { background: "#89ffb8", border: "#ffffff", highlight: { background: "#ffffff", border: "#89ffb8" } }
+        : { background: "#1f1f1f", border: "#666666", highlight: { background: "#333", border: "#aaa" } }
     });
   });
 
   if (firstMatchedNode) {
-    network.focus(firstMatchedNode, {
-      scale: 1.5,
-      animation: { duration: 500, easingFunction: "easeInOutQuad" }
-    });
+    network.focus(firstMatchedNode, { scale: 1.5, animation: { duration: 500, easingFunction: "easeInOutQuad" } });
   }
 }
 
@@ -168,14 +141,10 @@ function setupModalEvents() {
       const modalContent = document.getElementById("modal-content");
       const iframe = document.getElementById("project-frame");
 
-      // Clean up iframe
       iframe.src = "";
       iframe.style.display = "none";
-
-      // Clear previous content
       modalContent.innerHTML = "";
 
-      // Build modal content
       const titleElement = document.createElement("h2");
       titleElement.textContent = project.title;
 
@@ -247,17 +216,9 @@ function setupModalEvents() {
   });
 }
 
-import { initBackground, shiftBackground } from './background.js';
-
-fetch("projects.json")
-  .then((res) => res.json())
-  .then((data) => {
-    projects = data;
-    buildGraph();
-    setupFilters();
-    setupDragParallax();
-    initBackground(); // Initialize dot matrix
-  });
+// ==============================
+// Parallax Setup
+// ==============================
 
 function setupDragParallax() {
   network.on("dragStart", function (params) {
@@ -273,7 +234,7 @@ function setupDragParallax() {
 
       lastPosition = { x: params.pointer.canvas.x, y: params.pointer.canvas.y };
 
-      shiftBackground(deltaX, deltaY); // Move canvas background
+      shiftBackground(deltaX, deltaY);
     }
   });
 }
