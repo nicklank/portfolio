@@ -53,6 +53,9 @@ function generateDots() {
     const cols = Math.ceil(canvas.width / spacing) + 2;
     const rows = Math.ceil(canvas.height / spacing) + 2;
 
+    // The new base size for dots when not influenced by the cursor
+    const initialBaseDotSize = 0.5;
+
     for (let col = 0; col < cols; col++) {
         for (let row = 0; row < rows; row++) {
             // Initial position (baseX, baseY) is slightly off-screen to handle offsets gracefully
@@ -63,8 +66,8 @@ function generateDots() {
                 baseY: y, // Original Y position without floating or offset
                 x: x,     // Current X position (affected by floating)
                 y: y,     // Current Y position (affected by floating)
-                size: 1.5, // Current rendered size of the dot
-                targetSize: 1.5 // Desired size (influenced by mouse proximity)
+                size: initialBaseDotSize, // Current rendered size of the dot
+                targetSize: initialBaseDotSize // Desired size (influenced by mouse proximity)
             });
         }
     }
@@ -85,8 +88,9 @@ function updateCursorPosition(e) {
  */
 function updateDotSizes() {
     const maxDistance = 150; // The maximum distance from the cursor for a dot to be affected
-    const baseSize = 1.5;    // The default size of dots when not influenced by the cursor
-    const maxScale = 3.5;    // Maximum multiplier for dot size when directly under the cursor
+    const baseSize = 0.5;    // *** NEW: The default, smaller size of dots when not influenced by the cursor ***
+    const maxScale = 12.5;   // *** NEW: Maximum multiplier for dot size, adjusted for new baseSize ***
+                            // (0.5 * (1 + 12.5) = 0.5 * 13.5 = 6.75, keeping max size similar to before)
 
     dots.forEach(dot => {
         // Calculate the dot's current screen position, taking into account the background offset.
@@ -153,7 +157,8 @@ function animateDots() {
     updateDotSizes();
 
     // Set the drawing color for the dots (green with some transparency)
-    ctx.fillStyle = "rgba(137, 255, 184, 0.8)";
+    // *** NEW: Reduced alpha to 0.6 for fainter default dots ***
+    ctx.fillStyle = "rgba(137, 255, 184, 0.6)";
 
     // Draw each dot
     dots.forEach(dot => {
