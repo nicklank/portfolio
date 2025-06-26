@@ -81,14 +81,14 @@ body::before {
 /* Simplified Glass Modal Bubble */
 #modal-bubble {
   position: absolute;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  border-radius: 0%;
+  width: 0px;
+  height: 0px;
   
   /* Simple glass effect with gaussian blur */
   background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.3);
-  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
   
   transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
@@ -103,7 +103,7 @@ body::before {
   height: 80vh;
   border-radius: 0; /* Sharp 90-degree corners as in your original */
   opacity: 1;
-  border: 1px solid rgba(255,255,255,0.4);
+  border: 1px solid rgba(255,255,255,0.3);
   
   background: rgba(255,255,255,0.06);
   backdrop-filter: blur(20px);
