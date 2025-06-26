@@ -1,20 +1,29 @@
 // ==============================
-// Dot Matrix Background
+// Dot Matrix Background with Cursor Proximity Effect
 // ==============================
 
 let canvas, ctx;
 let dots = [];
 let offsetX = 0;
 let offsetY = 0;
+let mouseX = 0;
+let mouseY = 0;
+let animationId;
 
 function initBackground() {
   canvas = document.getElementById('background-canvas');
+  if (!canvas) {
+    console.warn('Background canvas not found');
+    return;
+  }
+  
   ctx = canvas.getContext('2d');
-
   resizeCanvas();
+  
+  // Event listeners
   window.addEventListener('resize', resizeCanvas);
-  document.addEventListener('mousemove', updateDotSizeByCursor);
-
+  document.addEventListener('mousemove', updateCursorPosition);
+  
   generateDots();
   animateDots();
 }
@@ -22,63 +31,149 @@ function initBackground() {
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  generateDots(); // Regenerate dots when canvas resizes
 }
 
 function generateDots() {
   dots = [];
   const spacing = 50;
-
-  for (let x = 0; x < canvas.width; x += spacing) {
-    for (let y = 0; y < canvas.height; y += spacing) {
-      dots.push({ baseX: x, baseY: y, x: x, y: y, size: 1.5 });
+  const cols = Math.ceil(canvas.width / spacing) + 2; // Extra dots for smooth scrolling
+  const rows = Math.ceil(canvas.height / spacing) + 2;
+  
+  for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < rows; row++) {
+      const x = col * spacing - spacing; // Start off-screen for smooth scrolling
+      const y = row * spacing - spacing;
+      dots.push({ 
+        baseX: x, 
+        baseY: y, 
+        x: x, 
+        y: y, 
+        size: 1.5,
+        targetSize: 1.5
+      });
     }
   }
 }
 
-function updateDotSizeByCursor(e) {
-  const cursorX = e.clientX;
-  const cursorY = e.clientY;
+function updateCursorPosition(e) {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+}
 
+function updateDotSizes() {
   dots.forEach(dot => {
-    const dx = dot.x - cursorX;
-    const dy = dot.y - cursorY;
+    // Calculate actual dot position including offset
+    const dotScreenX = dot.x + offsetX;
+    const dotScreenY = dot.y + offsetY;
+    
+    const dx = dotScreenX - mouseX;
+    const dy = dotScreenY - mouseY;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const maxDistance = 200;
-
+    
+    const maxDistance = 150; // Proximity range
+    const maxScale = 3.5; // Maximum size multiplier
+    
     if (distance < maxDistance) {
-      const scale = 1 + (1 - distance / maxDistance) * 2.5; // max size multiplier
-      dot.size = 1.5 * scale;
+      const influence = 1 - (distance / maxDistance);
+      const scale = 1 + (influence * maxScale);
+      dot.targetSize = 1.5 * scale;
     } else {
-      dot.size = 1.5;
+      dot.targetSize = 1.5;
     }
+    
+    // Smooth interpolation to target size
+    dot.size += (dot.targetSize - dot.size) * 0.15;
   });
 }
 
 function animateDots() {
+  // Clear canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "#89ffb8";
+  
+  // Update dot sizes based on cursor proximity
+  updateDotSizes();
+  
+  // Set dot color with slight transparency
+  ctx.fillStyle = "rgba(137, 255, 184, 0.8)";
+  
+  // Draw dots
   dots.forEach(dot => {
-    ctx.beginPath();
-    ctx.arc(dot.x + offsetX, dot.y + offsetY, dot.size, 0, Math.PI * 2);
-    ctx.fill();
+    const screenX = dot.x + offsetX;
+    const screenY = dot.y + offsetY;
+    
+    // Only draw dots that are visible on screen (performance optimization)
+    if (screenX > -10 && screenX < canvas.width + 10 && 
+        screenY > -10 && screenY < canvas.height + 10) {
+      ctx.beginPath();
+      ctx.arc(screenX, screenY, dot.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
   });
-
-  requestAnimationFrame(animateDots);
+  
+  animationId = requestAnimationFrame(animateDots);
 }
 
 function shiftBackground(deltaX, deltaY) {
   offsetX += deltaX;
   offsetY += deltaY;
+  
+  // Wrap offset to prevent infinite scrolling accumulation
+  const spacing = 50;
+  if (offsetX > spacing) offsetX -= spacing;
+  if (offsetX < -spacing) offsetX += spacing;
+  if (offsetY > spacing) offsetY -= spacing;
+  if (offsetY < -spacing) offsetY += spacing;
 }
 
-function startNodeFloating() {
-  setInterval(() => {
-    const positions = network.getPositions();
-    Object.keys(positions).forEach(nodeId => {
-      const node = nodes.get(nodeId);
-      const offset = Math.random() * 0.3 - 0.15; // subtle movement
-      nodes.update({ id: nodeId, x: node.x + offset, y: node.y + offset });
-    });
-  }, 1000); // Every second
+// Clean up function (call this if you need to stop the animation)
+function cleanupBackground() {
+  if (animationId) {
+    cancelAnimationFrame(animationId);
+  }
+  window.removeEventListener('resize', resizeCanvas);
+  document.removeEventListener('mousemove', updateCursorPosition);
 }
+
+// Optional: Add subtle floating animation to dots
+function addSubtleFloating() {
+  const time = Date.now() * 0.001;
+  
+  dots.forEach((dot, index) => {
+    const floatX = Math.sin(time + index * 0.1) * 0.5;
+    const floatY = Math.cos(time + index * 0.15) * 0.3;
+    
+    dot.x = dot.baseX + floatX;
+    dot.y = dot.baseY + floatY;
+  });
+}
+
+// Enhanced version with floating effect (optional)
+function animateDotsWithFloating() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Add subtle floating movement
+  addSubtleFloating();
+  
+  // Update dot sizes based on cursor proximity
+  updateDotSizes();
+  
+  ctx.fillStyle = "rgba(137, 255, 184, 0.8)";
+  
+  dots.forEach(dot => {
+    const screenX = dot.x + offsetX;
+    const screenY = dot.y + offsetY;
+    
+    if (screenX > -10 && screenX < canvas.width + 10 && 
+        screenY > -10 && screenY < canvas.height + 10) {
+      ctx.beginPath();
+      ctx.arc(screenX, screenY, dot.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+  
+  animationId = requestAnimationFrame(animateDotsWithFloating);
+}
+
+// Call this instead of animateDots() if you want the floating effect
+// animateDotsWithFloating();
