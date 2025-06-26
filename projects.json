@@ -2,14 +2,7 @@
     {
         "id": "activest",
         "title": "Activest",
-        "tags": [
-            "softgood",
-            "2025",
-            "fashion",
-            "activism",
-            "cloth",
-            "product"
-        ],
+        "tags": ["softgood", "2025", "fashion", "activism", "cloth", "product"],
         "description": "A Project about sustainable softgoods and activism.",
         "images": [
             "image1.jpg",
