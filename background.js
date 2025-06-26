@@ -1,71 +1,84 @@
-// background.js
+// ==============================
+// Dot Matrix Background
+// ==============================
 
 let canvas, ctx;
 let dots = [];
-const spacing = 40;
-const rows = Math.ceil(window.innerHeight / spacing) + 2;
-const cols = Math.ceil(window.innerWidth / spacing) + 2;
 let offsetX = 0;
 let offsetY = 0;
 
-// Initialize canvas
 function initBackground() {
   canvas = document.getElementById('background-canvas');
   ctx = canvas.getContext('2d');
 
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  document.addEventListener('mousemove', updateDotSizeByCursor);
 
-  // Create grid of dots
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      dots.push({ x: x * spacing, y: y * spacing });
-    }
-  }
-
-  window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  });
-
-  requestAnimationFrame(drawBackground);
+  generateDots();
+  animateDots();
 }
 
-// Track mouse for proximity
-let cursor = { x: 0, y: 0 };
-document.addEventListener('mousemove', (e) => {
-  cursor.x = e.clientX;
-  cursor.y = e.clientY;
-});
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
 
-// Draw background with proximity-based dot sizing
-function drawBackground() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function generateDots() {
+  dots = [];
+  const spacing = 50;
+
+  for (let x = 0; x < canvas.width; x += spacing) {
+    for (let y = 0; y < canvas.height; y += spacing) {
+      dots.push({ baseX: x, baseY: y, x: x, y: y, size: 1.5 });
+    }
+  }
+}
+
+function updateDotSizeByCursor(e) {
+  const cursorX = e.clientX;
+  const cursorY = e.clientY;
 
   dots.forEach(dot => {
-    const dx = cursor.x - (dot.x + offsetX);
-    const dy = cursor.y - (dot.y + offsetY);
+    const dx = dot.x - cursorX;
+    const dy = dot.y - cursorY;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const maxEffectRadius = 200;
+    const maxDistance = 200;
 
-    let size = 1.5;
-    if (distance < maxEffectRadius) {
-      size = 1.5 + (1 - distance / maxEffectRadius) * 4; // Size maxes out at ~5.5px
+    if (distance < maxDistance) {
+      const scale = 1 + (1 - distance / maxDistance) * 2.5; // max size multiplier
+      dot.size = 1.5 * scale;
+    } else {
+      dot.size = 1.5;
     }
+  });
+}
 
+function animateDots() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#89ffb8";
+  dots.forEach(dot => {
     ctx.beginPath();
-    ctx.arc(dot.x + offsetX, dot.y + offsetY, size, 0, Math.PI * 2);
-    ctx.fillStyle = '#444';
+    ctx.arc(dot.x + offsetX, dot.y + offsetY, dot.size, 0, Math.PI * 2);
     ctx.fill();
   });
 
-  requestAnimationFrame(drawBackground);
+  requestAnimationFrame(animateDots);
 }
 
-// Parallax shifting function
-function shiftBackground(dx, dy) {
-  offsetX += dx;
-  offsetY += dy;
+function shiftBackground(deltaX, deltaY) {
+  offsetX += deltaX;
+  offsetY += deltaY;
 }
 
-export { initBackground, shiftBackground };
+function startNodeFloating() {
+  setInterval(() => {
+    const positions = network.getPositions();
+    Object.keys(positions).forEach(nodeId => {
+      const node = nodes.get(nodeId);
+      const offset = Math.random() * 0.3 - 0.15; // subtle movement
+      nodes.update({ id: nodeId, x: node.x + offset, y: node.y + offset });
+    });
+  }, 1000); // Every second
+}
