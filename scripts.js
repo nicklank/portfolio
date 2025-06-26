@@ -85,7 +85,9 @@ function buildGraph() {
       size: 15
     },
     edges: {
-      smooth: false // Straight lines
+      smooth: {
+        type: "curvedCCW", //slightly consistent curvature
+        roundness: 0.05 //subtle curve
     }
   };
 
