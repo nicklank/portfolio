@@ -1,5 +1,5 @@
 // ==============================
-// Dot Matrix Background with Cursor Proximity and Drag Effect
+// Dot Matrix Background with Cursor Proximity and Document-Level Drag Effect
 // ==============================
 
 let canvas, ctx;
@@ -10,9 +10,9 @@ let mouseX = 0; // Current mouse X position (for proximity effect)
 let mouseY = 0; // Current mouse Y position (for proximity effect)
 let animationId; // Stores the ID returned by requestAnimationFrame for cancellation
 
-let isDragging = false; // Flag to track if the mouse is currently dragging
-let lastMouseX = 0;   // Stores the last X position of the mouse during a drag
-let lastMouseY = 0;   // Stores the last Y position of the mouse during a drag
+let isDraggingBackground = false; // Flag to track if the background is currently being dragged
+let lastMouseX = 0;               // Stores the last X position of the mouse during a drag
+let lastMouseY = 0;               // Stores the last Y position of the mouse during a drag
 
 /**
  * Initializes the background canvas and starts the animation.
@@ -28,16 +28,16 @@ function initBackground() {
     ctx = canvas.getContext('2d');
     resizeCanvas(); // Set initial canvas size and generate dots
 
-    // Event listeners for responsiveness, interactivity, and dragging
+    // Event listeners for responsiveness and interactivity
     window.addEventListener('resize', resizeCanvas);
-    document.addEventListener('mousemove', updateCursorPosition); // For proximity effect
-
-    // === New Dragging Event Listeners ===
-    canvas.addEventListener('mousedown', startDragging);
-    // document.body is used for mouseup/mouseleave to ensure the drag stops even if
-    // the cursor leaves the canvas area while dragging, then button is released.
-    document.body.addEventListener('mouseup', stopDragging);
-    document.body.addEventListener('mouseleave', stopDragging); // In case mouse leaves window
+    document.addEventListener('mousemove', updateCursorPositionAndDrag); // Combined handler
+    
+    // === Modified Dragging Event Listeners: Now on document ===
+    // This allows us to capture the mousedown even if something else is on top,
+    // and then check if the target was our canvas.
+    document.addEventListener('mousedown', startBackgroundDrag);
+    document.addEventListener('mouseup', stopBackgroundDrag);
+    document.addEventListener('mouseleave', stopBackgroundDrag); // In case mouse leaves window
     // ===================================
 
     // Start the animation loop
@@ -86,42 +86,46 @@ function generateDots() {
 }
 
 /**
- * Updates the global mouseX and mouseY variables based on cursor movement.
- * Also handles dragging if `isDragging` flag is true.
+ * Handles mouse movement for both proximity effect and background dragging.
  * @param {MouseEvent} e - The mouse event object.
  */
-function updateCursorPosition(e) {
-    // Update for proximity effect
+function updateCursorPositionAndDrag(e) {
+    // Always update for proximity effect
     mouseX = e.clientX;
     mouseY = e.clientY;
 
-    // Handle dragging movement
-    if (isDragging) {
+    // Handle background dragging movement
+    if (isDraggingBackground) {
         const deltaX = mouseX - lastMouseX;
         const deltaY = mouseY - lastMouseY;
         shiftBackground(deltaX, deltaY); // Move the entire background
         lastMouseX = mouseX; // Update last position for next frame
         lastMouseY = mouseY;
+        // Prevent default text selection etc. during drag if it's the background we're dragging
+        e.preventDefault();
     }
 }
 
 /**
- * Starts the dragging process when the mouse button is pressed down on the canvas.
+ * Initiates the background dragging process ONLY if the click originated on the canvas.
  * @param {MouseEvent} e - The mouse event object.
  */
-function startDragging(e) {
-    isDragging = true;
-    lastMouseX = e.clientX;
-    lastMouseY = e.clientY;
-    // Optional: Prevent default browser dragging behavior for images/text
-    e.preventDefault();
+function startBackgroundDrag(e) {
+    // Check if the actual element clicked was our background canvas
+    if (e.target === canvas) {
+        isDraggingBackground = true;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        // Important: Prevent default browser dragging behaviors for the background canvas
+        e.preventDefault();
+    }
 }
 
 /**
- * Stops the dragging process when the mouse button is released or leaves the window.
+ * Stops the background dragging process.
  */
-function stopDragging() {
-    isDragging = false;
+function stopBackgroundDrag() {
+    isDraggingBackground = false;
 }
 
 /**
@@ -129,14 +133,12 @@ function stopDragging() {
  * Dots closer to the cursor will have a larger targetSize.
  */
 function updateDotSizes() {
-    const maxDistance = 170; // The maximum distance from the cursor for a dot to be affected
+    const maxDistance = 150; // The maximum distance from the cursor for a dot to be affected
     const baseSize = 1;    // The default size of dots when not influenced by the cursor
-    const maxScale = 3;    // Maximum multiplier for dot size when directly under the cursor
+    const maxScale = 3.5;    // Maximum multiplier for dot size when directly under the cursor
 
     dots.forEach(dot => {
         // Calculate the dot's current screen position, taking into account the background offset.
-        // This is crucial because mouse coordinates are relative to the screen,
-        // and dots might be shifted due to 'shiftBackground'.
         const dotScreenX = dot.x + offsetX;
         const dotScreenY = dot.y + offsetY;
 
@@ -146,38 +148,29 @@ function updateDotSizes() {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < maxDistance) {
-            // Calculate influence: 1 when directly under cursor, 0 at maxDistance
             const influence = 1 - (distance / maxDistance);
-            // Calculate scale: baseSize when no influence, baseSize * (1 + maxScale) at max influence
             const scale = 1 + (influence * maxScale);
             dot.targetSize = baseSize * scale;
         } else {
-            // Reset to base size if outside the influence range
             dot.targetSize = baseSize;
         }
 
         // Smoothly interpolate the current dot size towards its target size.
-        // The 0.15 factor controls the speed of the smoothing animation.
         dot.size += (dot.targetSize - dot.size) * 0.15;
     });
 }
 
 /**
  * Adds a subtle, continuous floating movement to each dot.
- * This effect is based on time and the dot's index to create a gentle, varied motion.
  */
 function addSubtleFloating() {
-    const time = Date.now() * 0.002; // Convert current time to seconds for animation
-    const floatAmplitudeX = 0.5; // Max horizontal floating displacement
-    const floatAmplitudeY = 0.5; // Max vertical floating displacement
+    const time = Date.now() * 0.003; // Convert current time to seconds for animation
+    const floatAmplitudeX = 0.55; // Max horizontal floating displacement
+    const floatAmplitudeY = 0.55; // Max vertical floating displacement
 
     dots.forEach((dot, index) => {
-        // Use sine and cosine waves for smooth, oscillating movement
-        // Add index * offset to ensure dots don't move in perfect sync
         const floatX = Math.sin(time + index * 0.1) * floatAmplitudeX;
-        const floatY = Math.cos(time + index * 0.18) * floatAmplitudeY;
-
-        // Apply floating movement relative to the base (original) position
+        const floatY = Math.cos(time + index * 0.15) * floatAmplitudeY;
         dot.x = dot.baseX + floatX;
         dot.y = dot.baseY + floatY;
     });
@@ -188,52 +181,33 @@ function addSubtleFloating() {
  * draws the dots, and requests the next animation frame.
  */
 function animateDots() {
-    // Clear the entire canvas to prepare for the new frame
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Apply subtle floating movement to dots
     addSubtleFloating();
-
-    // Update dot sizes based on cursor proximity
     updateDotSizes();
-
-    // Set the drawing color for the dots (green with some transparency)
     ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
 
-    // Draw each dot
     dots.forEach(dot => {
-        // Calculate the dot's final screen position, combining its current position (base + float)
-        // and the overall background offset.
         const screenX = dot.x + offsetX;
         const screenY = dot.y + offsetY;
 
-        // Performance optimization: Only draw dots that are currently visible on screen
-        // This prevents rendering dots that are far off-screen.
         if (screenX > -10 && screenX < canvas.width + 10 &&
             screenY > -10 && screenY < canvas.height + 10) {
             ctx.beginPath();
-            ctx.arc(screenX, screenY, dot.size, 0, Math.PI * 2); // Draw a circle (dot)
-            ctx.fill(); // Fill the circle with the current fillStyle
+            ctx.arc(screenX, screenY, dot.size, 0, Math.PI * 2);
+            ctx.fill();
         }
     });
 
-    // Request the next animation frame, creating a continuous loop
     animationId = requestAnimationFrame(animateDots);
 }
 
 /**
  * Shifts the entire dot matrix background by the given delta values.
- * This can be used for parallax effects or general background movement.
- * @param {number} deltaX - The amount to shift horizontally.
- * @param {number} deltaY - The amount to shift vertically.
  */
 function shiftBackground(deltaX, deltaY) {
     offsetX += deltaX;
     offsetY += deltaY;
 
-    // Wrap offset to prevent values from growing infinitely large,
-    // ensuring seamless repeating pattern if dots were infinite.
-    // This uses the dot spacing to wrap, making it visually continuous.
     const spacing = 50;
     if (offsetX > spacing) offsetX -= spacing;
     if (offsetX < -spacing) offsetX += spacing;
@@ -243,17 +217,16 @@ function shiftBackground(deltaX, deltaY) {
 
 /**
  * Cleans up event listeners and stops the animation loop.
- * Call this if the background needs to be removed or stopped.
  */
 function cleanupBackground() {
     if (animationId) {
-        cancelAnimationFrame(animationId); // Stop the animation loop
+        cancelAnimationFrame(animationId);
     }
     window.removeEventListener('resize', resizeCanvas);
-    document.removeEventListener('mousemove', updateCursorPosition);
-    canvas.removeEventListener('mousedown', startDragging);
-    document.body.removeEventListener('mouseup', stopDragging);
-    document.body.removeEventListener('mouseleave', stopDragging);
+    document.removeEventListener('mousemove', updateCursorPositionAndDrag);
+    document.removeEventListener('mousedown', startBackgroundDrag);
+    document.removeEventListener('mouseup', stopBackgroundDrag);
+    document.removeEventListener('mouseleave', stopBackgroundDrag);
 }
 
 // Automatically initialize the background when the window loads
