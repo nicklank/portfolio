@@ -1,51 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Graph Portfolio</title>
-  <link rel="stylesheet" href="style.css" />
-  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Graph Portfolio</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        /* This style block ensures proper positioning of elements */
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevent scrollbars from appearing due to full-screen canvas */
+            /* Add any other global body styles here */
+        }
+
+        #background-canvas {
+            position: fixed; /* Stays in place when scrolling (if content were scrollable) */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Ensures canvas is a normal layer, not hidden behind everything */
+        }
+
+        /* Ensure filter controls and the network graph are on top and clickable */
+        #filters {
+            position: relative; /* Or absolute/fixed depending on layout needs */
+            z-index: 10; /* Higher than canvas, so it's clickable */
+            /* Add other styling for your filters div here */
+            padding: 10px; /* Example */
+            background-color: rgba(255, 255, 255, 0.1); /* Example translucent background */
+            border-bottom-left-radius: 5px; /* Example */
+            border-bottom-right-radius: 5px; /* Example */
+            text-align: center; /* Example */
+        }
+
+        #network {
+            position: relative; /* Or absolute/fixed depending on layout needs */
+            z-index: 5; /* Higher than canvas, but potentially lower than filters if filters are always on top */
+            width: 100vw; /* Example: full viewport width */
+            height: calc(100vh - 60px); /* Example: full viewport height minus filter height */
+            background-color: rgba(0, 0, 0, 0.0); /* Ensure it's transparent if you want canvas visible */
+            /* === IMPORTANT CHANGE HERE: Allow mouse events to pass through this div === */
+            pointer-events: none;
+        }
+
+        /* Elements inside #network that *should* be clickable (e.g., vis-network nodes) */
+        /* will need pointer-events: auto; if they are children of #network */
+        #network > * {
+            pointer-events: auto; /* Re-enable pointer events for children if needed */
+        }
+
+        #modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 100; /* Very high z-index for modals */
+        }
+
+        #modal-bubble {
+            background: #282828;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            max-width: 80%;
+            max-height: 80%;
+            overflow: auto; /* For scrollable content in modal */
+        }
+
+        #close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #ccc;
+        }
+
+        #modal-content {
+            color: #fff;
+            /* Add styling for modal content */
+        }
+
+        #project-frame {
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="background-canvas" style="position:fixed; top:0; left:0; z-index:-1;"></canvas>
+    <!-- The canvas element for the dot matrix background -->
+    <canvas id="background-canvas"></canvas>
 
-<div id="filters">
-  <select id="materialSelect">
-    <option value="">Material</option>
-    <option value="wood">Wood</option>
-    <option value="metal">Metal</option>
-    <option value="cloth">Cloth</option>
-    <option value="plastic">Plastic</option>
-  </select>
+    <div id="filters">
+        <select id="materialSelect">
+            <option value="">Material</option>
+            <option value="wood">Wood</option>
+            <option value="metal">Metal</option>
+            <option value="cloth">Cloth</option>
+            <option value="plastic">Plastic</option>
+        </select>
 
-  <select id="yearSelect">
-    <option value="">Year</option>
-    <option value="2023">2023</option>
-    <option value="2024">2024</option>
-    <option value="2025">2025</option>
-  </select>
+        <select id="yearSelect">
+            <option value="">Year</option>
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+        </select>
 
-  <select id="categorySelect">
-    <option value="">Category</option>
-    <option value="graphic design">Graphic Design</option>
-    <option value="video">Video</option>
-    <option value="music">Music</option>
-    <option value="product">Product</option>
-  </select>
-</div>
+        <select id="categorySelect">
+            <option value="">Category</option>
+            <option value="graphic design">Graphic Design</option>
+            <option value="video">Video</option>
+            <option value="music">Music</option>
+            <option value="product">Product</option>
+        </select>
+    </div>
 
-  <div id="network"></div>
+    <div id="network"></div>
 
-<div id="modal">
-  <div id="modal-bubble">
-    <span id="close-modal">✕</span>
-    <div id="modal-content"></div> <!-- Add this -->
-    <iframe id="project-frame" style="display:none;"></iframe> <!-- Keep but hide -->
-  </div>
-</div>
+    <div id="modal">
+        <div id="modal-bubble">
+            <span id="close-modal">✕</span>
+            <div id="modal-content"></div> <!-- Add this -->
+            <iframe id="project-frame" style="display:none;"></iframe> <!-- Keep but hide -->
+        </div>
+    </div>
 
-  <script src="background.js"></script>
-  <script src="scripts.js"></script>
+    <script src="background.js"></script>
+    <script src="scripts.js"></script>
 </body>
 </html>
