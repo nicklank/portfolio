@@ -247,28 +247,17 @@ function setupModalEvents() {
   });
 }
 
-// ==============================
-// Mouse Interaction for Dot Size
-// ==============================
+import { initBackground, shiftBackground } from './background.js';
 
-document.addEventListener("mousemove", function (e) {
-  const cursorX = e.clientX;
-  const cursorY = e.clientY;
-
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
-
-  const dist = Math.sqrt(Math.pow(cursorX - centerX, 2) + Math.pow(cursorY - centerY, 2));
-  const maxDist = Math.sqrt(Math.pow(centerX, 2) + Math.pow(centerY, 2));
-  const proximity = 1 - dist / maxDist;
-
-  const size = 1.5 + proximity * 2;
-  document.documentElement.style.setProperty("--dotSize", `${size}px`);
-});
-
-// ==============================
-// Parallax Drag Background
-// ==============================
+fetch("projects.json")
+  .then((res) => res.json())
+  .then((data) => {
+    projects = data;
+    buildGraph();
+    setupFilters();
+    setupDragParallax();
+    initBackground(); // Initialize dot matrix
+  });
 
 function setupDragParallax() {
   network.on("dragStart", function (params) {
@@ -284,9 +273,7 @@ function setupDragParallax() {
 
       lastPosition = { x: params.pointer.canvas.x, y: params.pointer.canvas.y };
 
-      document.body.style.backgroundPosition = `${deltaX}px ${deltaY}px`;
-      document.documentElement.style.setProperty("--parallaxX", `${deltaX}px`);
-      document.documentElement.style.setProperty("--parallaxY", `${deltaY}px`);
+      shiftBackground(deltaX, deltaY); // Move canvas background
     }
   });
 }
