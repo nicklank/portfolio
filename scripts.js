@@ -323,28 +323,3 @@ function setupModalEvents() {
   }
 }
 
-// ==============================
-// Parallax Setup
-// ==============================
-
-function setupDragParallax() {
-  network.on("dragStart", function (params) {
-    if (params.pointer) {
-      lastPosition = { x: params.pointer.canvas.x, y: params.pointer.canvas.y };
-    }
-  });
-
-  network.on("dragging", function (params) {
-    if (params.pointer) {
-      const deltaX = (params.pointer.canvas.x - lastPosition.x) * 0.02;
-      const deltaY = (params.pointer.canvas.y - lastPosition.y) * 0.02;
-
-      lastPosition = { x: params.pointer.canvas.x, y: params.pointer.canvas.y };
-
-      // Only call shiftBackground if it exists
-      if (typeof shiftBackground === 'function') {
-        shiftBackground(deltaX, deltaY);
-      }
-    }
-  });
-}
