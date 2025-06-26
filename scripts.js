@@ -34,12 +34,16 @@ function buildGraph() {
       color: {
         background: "#1f1f1f",
         border: "#89ffb8",
-        highlight: { background: "#89ffb8", border: "#ffffff" }
+        highlight: {
+          background: "#89ffb8",
+          border: "#ffffff"
+        }
       },
       font: { color: "#ffffff" },
       value: 10
     });
 
+    // Build tag map for edges
     project.tags.forEach((tag) => {
       if (!tagMap[tag]) tagMap[tag] = [];
       tagMap[tag].push(project.id);
@@ -60,35 +64,39 @@ function buildGraph() {
     }
   }
 
-const options = {
-  physics: {
-    stabilization: false,
-    barnesHut: {
-      gravitationalConstant: -5000,
-      springLength: 300,
-      springConstant: 0.02
-    }
-  },
-  interaction: {
-    hover: true,
-    dragNodes: true
-  },
-  nodes: {
-    shape: "dot",
-    size: 15
-  },
-  edges: {
-    smooth: {
-      type: "curvedCCW", // slightly consistent curvature
-      roundness: 0.05 // subtle curve
-    }
-  }
-}; // <-- You were missing this closing brace and semicolon
+  // ✅ ADD THIS BACK:
+  const data = { nodes, edges };
 
+  const options = {
+    physics: {
+      stabilization: false,
+      barnesHut: {
+        gravitationalConstant: -5000,
+        springLength: 300,
+        springConstant: 0.02
+      }
+    },
+    interaction: {
+      hover: true,
+      dragNodes: true
+    },
+    nodes: {
+      shape: "dot",
+      size: 15
+    },
+    edges: {
+      smooth: {
+        type: "curvedCCW",
+        roundness: 0.05
+      }
+    }
+  };
 
   network = new vis.Network(container, data, options);
   setupModalEvents();
+  setupDragParallax();
 }
+
 
 // ==============================
 // Filtering Logic
