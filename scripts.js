@@ -120,6 +120,9 @@ function filterGraph() {
 
   let firstMatchedNode = null;
 
+  // 🚨 Temporarily disable physics
+  network.setOptions({ physics: false });
+
   nodes.forEach((node) => {
     const project = projects.find((p) => p.id === node.id);
     const tags = project.tags.map((t) => t.toLowerCase());
@@ -138,15 +141,32 @@ function filterGraph() {
       id: node.id,
       value: match ? 30 : 10,
       color: match
-        ? { background: "#89ffb8", border: "#ffffff", highlight: { background: "#ffffff", border: "#89ffb8" } }
-        : { background: "#1f1f1f", border: "#666666", highlight: { background: "#333", border: "#aaa" } }
+        ? {
+            background: "#89ffb8",
+            border: "#ffffff",
+            highlight: { background: "#ffffff", border: "#89ffb8" }
+          }
+        : {
+            background: "#1f1f1f",
+            border: "#666666",
+            highlight: { background: "#333", border: "#aaa" }
+          }
     });
   });
 
   if (firstMatchedNode) {
-    network.focus(firstMatchedNode, { scale: 1.5, animation: { duration: 500, easingFunction: "easeInOutQuad" } });
+    network.focus(firstMatchedNode, {
+      scale: 1.5,
+      animation: { duration: 500, easingFunction: "easeInOutQuad" }
+    });
   }
+
+  // ✅ Smoothly re-enable physics
+  setTimeout(() => {
+    network.setOptions({ physics: { enabled: true } });
+  }, 300);
 }
+
 
 // ==============================
 // Modal Setup
@@ -159,9 +179,10 @@ function setupModalEvents() {
       const project = projects.find((p) => p.id === nodeId);
       if (!project) return;
 
-      // ===========================
-      // Reset All Nodes to Default
-      // ===========================
+      // 🚨 Temporarily disable physics
+      network.setOptions({ physics: false });
+
+      // Reset all nodes
       nodes.forEach((node) => {
         nodes.update({
           id: node.id,
@@ -175,12 +196,10 @@ function setupModalEvents() {
         });
       });
 
-      // ===========================
-      // Highlight Clicked Node
-      // ===========================
+      // Highlight the clicked node
       nodes.update({
         id: nodeId,
-        value: 30, // Make it bigger
+        value: 30,
         color: {
           background: "#ffffff",
           border: "#89ffb8",
@@ -189,9 +208,12 @@ function setupModalEvents() {
         font: { color: "#ffffff", size: 24, bold: true }
       });
 
-      // ===========================
-      // Modal Setup
-      // ===========================
+      // Smoothly re-enable physics after updates
+      setTimeout(() => {
+        network.setOptions({ physics: { enabled: true } });
+      }, 300);
+
+      // Modal setup (same as before)
       const bubble = document.getElementById("modal-bubble");
       const modal = document.getElementById("modal");
       const modalContent = document.getElementById("modal-content");
@@ -256,6 +278,7 @@ function setupModalEvents() {
     }, 500);
   });
 }
+
 
 
 // ==============================
