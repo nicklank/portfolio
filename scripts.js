@@ -1,17 +1,25 @@
+// ==============================
+// Graph Setup
+// ==============================
+
 const container = document.getElementById("network");
 const nodes = new vis.DataSet();
 const edges = new vis.DataSet();
 const tagMap = {};
 let network;
 let projects = [];
+let lastPosition = { x: 0, y: 0 };
 
-// Fetch project data
+// ==============================
+// Data Fetch and Graph Build
+// ==============================
+
 fetch("projects.json")
   .then((res) => res.json())
   .then((data) => {
     projects = data;
     buildGraph();
-    setupFilters(); // only run after graph is built
+    setupFilters();
   });
 
 function buildGraph() {
@@ -28,13 +36,11 @@ function buildGraph() {
           border: "#ffffff"
         }
       },
-      font: {
-        color: "#ffffff"
-      },
+      font: { color: "#ffffff" },
       value: 10
     });
 
-    // Tag map for edge connections
+    // Build tag map for edges
     project.tags.forEach((tag) => {
       if (!tagMap[tag]) tagMap[tag] = [];
       tagMap[tag].push(project.id);
@@ -56,12 +62,18 @@ function buildGraph() {
   }
 
   const data = { nodes, edges };
+
+  // ============================
+  // Physics and Styling Options
+  // ============================
+
   const options = {
     physics: {
       stabilization: false,
       barnesHut: {
-        gravitationalConstant: -30000,
-        springLength: 200
+        gravitationalConstant: -5000,
+        springLength: 300,
+        springConstant: 0.02
       }
     },
     interaction: {
@@ -73,13 +85,18 @@ function buildGraph() {
       size: 15
     },
     edges: {
-      smooth: true
+      smooth: false // Straight lines
     }
   };
 
   network = new vis.Network(container, data, options);
   setupModalEvents();
+  setupDragParallax();
 }
+
+// ==============================
+// Filtering Logic
+// ==============================
 
 function setupFilters() {
   ["materialSelect", "yearSelect", "categorySelect"].forEach((id) => {
@@ -128,14 +145,14 @@ function filterGraph() {
   if (firstMatchedNode) {
     network.focus(firstMatchedNode, {
       scale: 1.5,
-      animation: {
-        duration: 500,
-        easingFunction: "easeInOutQuad"
-      }
+      animation: { duration: 500, easingFunction: "easeInOutQuad" }
     });
   }
 }
 
+// ==============================
+// Modal Setup
+// ==============================
 
 function setupModalEvents() {
   network.on("click", function (params) {
@@ -144,29 +161,25 @@ function setupModalEvents() {
       const project = projects.find((p) => p.id === nodeId);
       if (!project) return;
 
-      // Get modal elements
       const bubble = document.getElementById("modal-bubble");
       const modal = document.getElementById("modal");
-      const modalContent = document.getElementById("modal-content"); // New div for project info
-      const iframe = document.getElementById("project-frame"); // We'll hide this now
+      const modalContent = document.getElementById("modal-content");
+      const iframe = document.getElementById("project-frame");
 
-      // Clean up iframe to prevent inception issue
-      iframe.src = ""; // Stop loading the iframe entirely
-      iframe.style.display = "none"; // Fully hide the iframe (it's no longer used)
+      // Clean up iframe
+      iframe.src = "";
+      iframe.style.display = "none";
 
-      // Clear previous modal content
-      modalContent.innerHTML = ""; // Always start fresh when clicking a node
+      // Clear previous content
+      modalContent.innerHTML = "";
 
-      // 🟢 Build the project content inside the modal
-      // Title
+      // Build modal content
       const titleElement = document.createElement("h2");
       titleElement.textContent = project.title;
 
-      // Description
       const descElement = document.createElement("p");
       descElement.textContent = project.description || "No description provided.";
 
-      // Images
       const imagesContainer = document.createElement("div");
       imagesContainer.style.display = "flex";
       imagesContainer.style.flexDirection = "column";
@@ -181,7 +194,6 @@ function setupModalEvents() {
         });
       }
 
-      // Optional external link button
       if (project.externalLink) {
         const linkButton = document.createElement("a");
         linkButton.href = project.externalLink;
@@ -197,12 +209,10 @@ function setupModalEvents() {
         modalContent.appendChild(linkButton);
       }
 
-      // Add elements to modal content
       modalContent.appendChild(titleElement);
       modalContent.appendChild(descElement);
       modalContent.appendChild(imagesContainer);
 
-      // Animate the modal bubble (same as before)
       const pos = network.getPositions([nodeId])[nodeId];
       const canvasPos = network.canvasToDOM(pos);
 
@@ -220,7 +230,6 @@ function setupModalEvents() {
     }
   });
 
-  // Close modal event (unchanged)
   document.getElementById("close-modal").addEventListener("click", () => {
     const bubble = document.getElementById("modal-bubble");
     const iframe = document.getElementById("project-frame");
@@ -231,8 +240,51 @@ function setupModalEvents() {
     setTimeout(() => {
       document.getElementById("modal").style.display = "none";
       iframe.src = "";
-      modalContent.innerHTML = ""; // Clean up modal content when closing
+      modalContent.innerHTML = "";
     }, 500);
   });
 }
 
+// ==============================
+// Mouse Interaction for Dot Size
+// ==============================
+
+document.addEventListener("mousemove", function (e) {
+  const cursorX = e.clientX;
+  const cursorY = e.clientY;
+
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+
+  const dist = Math.sqrt(Math.pow(cursorX - centerX, 2) + Math.pow(cursorY - centerY, 2));
+  const maxDist = Math.sqrt(Math.pow(centerX, 2) + Math.pow(centerY, 2));
+  const proximity = 1 - dist / maxDist;
+
+  const size = 1.5 + proximity * 2;
+  document.documentElement.style.setProperty("--dotSize", `${size}px`);
+});
+
+// ==============================
+// Parallax Drag Background
+// ==============================
+
+function setupDragParallax() {
+  network.on("dragStart", function (params) {
+    if (params.pointer) {
+      lastPosition = { x: params.pointer.canvas.x, y: params.pointer.canvas.y };
+    }
+  });
+
+  network.on("dragging", function (params) {
+    if (params.pointer) {
+      const deltaX = (params.pointer.canvas.x - lastPosition.x) * 0.02;
+      const deltaY = (params.pointer.canvas.y - lastPosition.y) * 0.02;
+
+      lastPosition = { x: params.pointer.canvas.x, y: params.pointer.canvas.y };
+
+      document.body.style.backgroundPosition = `${deltaX}px ${deltaY}px`;
+      document.documentElement.style.setProperty("--parallaxX", `${deltaX}px`);
+      document.documentElement.style.setProperty("--parallaxY", `${deltaY}px`);
+    }
+  });
+}
