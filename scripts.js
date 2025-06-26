@@ -144,42 +144,95 @@ function setupModalEvents() {
       const project = projects.find((p) => p.id === nodeId);
       if (!project) return;
 
+      // Get modal elements
       const bubble = document.getElementById("modal-bubble");
       const modal = document.getElementById("modal");
-      const iframe = document.getElementById("project-frame");
+      const modalContent = document.getElementById("modal-content"); // New div for project info
+      const iframe = document.getElementById("project-frame"); // We'll hide this now
 
-      // Get canvas coordinates of clicked node
+      // Clean up iframe to prevent inception issue
+      iframe.src = ""; // Stop loading the iframe entirely
+      iframe.style.display = "none"; // Fully hide the iframe (it's no longer used)
+
+      // Clear previous modal content
+      modalContent.innerHTML = ""; // Always start fresh when clicking a node
+
+      // 🟢 Build the project content inside the modal
+      // Title
+      const titleElement = document.createElement("h2");
+      titleElement.textContent = project.title;
+
+      // Description
+      const descElement = document.createElement("p");
+      descElement.textContent = project.description || "No description provided.";
+
+      // Images
+      const imagesContainer = document.createElement("div");
+      imagesContainer.style.display = "flex";
+      imagesContainer.style.flexDirection = "column";
+      imagesContainer.style.gap = "10px";
+
+      if (project.images && project.images.length > 0) {
+        project.images.forEach((imgUrl) => {
+          const imgElement = document.createElement("img");
+          imgElement.src = imgUrl;
+          imgElement.style.maxWidth = "100%";
+          imagesContainer.appendChild(imgElement);
+        });
+      }
+
+      // Optional external link button
+      if (project.externalLink) {
+        const linkButton = document.createElement("a");
+        linkButton.href = project.externalLink;
+        linkButton.target = "_blank";
+        linkButton.textContent = "View Full Project";
+        linkButton.style.display = "inline-block";
+        linkButton.style.marginTop = "10px";
+        linkButton.style.padding = "8px 12px";
+        linkButton.style.backgroundColor = "#89ffb8";
+        linkButton.style.color = "#000";
+        linkButton.style.textDecoration = "none";
+        linkButton.style.borderRadius = "6px";
+        modalContent.appendChild(linkButton);
+      }
+
+      // Add elements to modal content
+      modalContent.appendChild(titleElement);
+      modalContent.appendChild(descElement);
+      modalContent.appendChild(imagesContainer);
+
+      // Animate the modal bubble (same as before)
       const pos = network.getPositions([nodeId])[nodeId];
       const canvasPos = network.canvasToDOM(pos);
 
-      // Set initial bubble position/size
       bubble.style.top = canvasPos.y + "px";
       bubble.style.left = canvasPos.x + "px";
       bubble.classList.remove("expanded");
 
-      // Show the modal
       modal.style.display = "flex";
 
-      // Force layout refresh then expand
       requestAnimationFrame(() => {
         bubble.classList.add("expanded");
         bubble.style.top = "10vh";
         bubble.style.left = "10vw";
-        iframe.src = project.url;
       });
     }
   });
 
+  // Close modal event (unchanged)
   document.getElementById("close-modal").addEventListener("click", () => {
     const bubble = document.getElementById("modal-bubble");
     const iframe = document.getElementById("project-frame");
+    const modalContent = document.getElementById("modal-content");
 
     bubble.classList.remove("expanded");
 
-    // Give time for animation before hiding
     setTimeout(() => {
       document.getElementById("modal").style.display = "none";
       iframe.src = "";
+      modalContent.innerHTML = ""; // Clean up modal content when closing
     }, 500);
   });
 }
+
