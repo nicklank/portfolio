@@ -71,35 +71,24 @@ body::before {
   align-items: center;
 }
 
-/* Mosaic Glass Modal Bubble */
+/* Procedural Glass Modal Bubble with Wave Distortion */
 #modal-bubble {
   position: absolute;
   border-radius: 50%;
   width: 40px;
   height: 40px;
-  background: 
-    repeating-linear-gradient(0deg, 
-      rgba(255,255,255,0.1) 0px, 
-      rgba(255,255,255,0.05) 8px, 
-      rgba(255,255,255,0.02) 12px,
-      rgba(0,0,0,0.05) 16px),
-    repeating-linear-gradient(90deg, 
-      rgba(255,255,255,0.08) 0px, 
-      rgba(255,255,255,0.03) 8px, 
-      rgba(255,255,255,0.01) 12px,
-      rgba(0,0,0,0.03) 16px),
-    linear-gradient(135deg, 
-      rgba(255,255,255,0.15) 0%, 
-      rgba(255,255,255,0.05) 50%, 
-      rgba(0,0,0,0.1) 100%);
   
+  /* Glass distortion parameters */
+  --wave-frequency: 20px;
+  --wave-amplitude: 0.8;
+  --distortion-strength: 8px;
+  --refraction-direction-x: 1;
+  --refraction-direction-y: 0;
+  --wave-type: sine; /* sine, square, sawtooth */
+  
+  background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.3);
-  backdrop-filter: blur(20px) saturate(120%);
-  box-shadow: 
-    0 0 30px rgba(0, 255, 180, 0.2),
-    inset 0 1px 0 rgba(255,255,255,0.4),
-    inset 0 -1px 0 rgba(0,0,0,0.2),
-    0 8px 32px rgba(0,0,0,0.3);
+  backdrop-filter: blur(15px) saturate(120%);
   
   transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
@@ -108,7 +97,7 @@ body::before {
   opacity: 0;
 }
 
-/* Mosaic glass tile texture overlay */
+/* Wave-based distortion layer 1 - Sine wave pattern */
 #modal-bubble::before {
   content: "";
   position: absolute;
@@ -116,26 +105,31 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
+  
+  /* Sine wave mask using radial gradients */
   background: 
-    repeating-linear-gradient(45deg,
-      rgba(255,255,255,0.08) 0px,
-      rgba(255,255,255,0.08) 1px,
-      rgba(255,255,255,0.02) 1px,
-      rgba(255,255,255,0.02) 12px,
-      rgba(0,0,0,0.03) 12px,
-      rgba(0,0,0,0.03) 13px),
-    repeating-linear-gradient(-45deg,
-      rgba(255,255,255,0.06) 0px,
-      rgba(255,255,255,0.06) 1px,
-      rgba(255,255,255,0.01) 1px,
-      rgba(255,255,255,0.01) 12px,
-      rgba(0,0,0,0.02) 12px,
-      rgba(0,0,0,0.02) 13px);
-  opacity: 0.7;
+    repeating-linear-gradient(0deg,
+      rgba(0,0,0,1) 0px,
+      rgba(0,0,0,0.8) calc(var(--wave-frequency) * 0.25),
+      rgba(255,255,255,0.2) calc(var(--wave-frequency) * 0.5),
+      rgba(0,0,0,0.8) calc(var(--wave-frequency) * 0.75),
+      rgba(0,0,0,1) var(--wave-frequency)),
+    repeating-linear-gradient(90deg,
+      rgba(0,0,0,0.7) 0px,
+      rgba(255,255,255,0.3) calc(var(--wave-frequency) * 0.5),
+      rgba(0,0,0,0.7) var(--wave-frequency));
+  
+  backdrop-filter: blur(calc(var(--distortion-strength) * 0.5));
+  transform: translate(
+    calc(var(--refraction-direction-x) * var(--distortion-strength) * 0.3), 
+    calc(var(--refraction-direction-y) * var(--distortion-strength) * 0.3)
+  );
+  mix-blend-mode: overlay;
+  opacity: calc(var(--wave-amplitude) * 0.6);
   pointer-events: none;
 }
 
-/* Additional mosaic detail layer */
+/* Wave-based distortion layer 2 - Offset refraction */
 #modal-bubble::after {
   content: "";
   position: absolute;
@@ -143,85 +137,124 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
+  
+  /* Inverted wave pattern for counter-distortion */
+  background: 
+    repeating-linear-gradient(90deg,
+      rgba(255,255,255,0.4) 0px,
+      rgba(0,0,0,0.6) calc(var(--wave-frequency) * 0.25),
+      rgba(255,255,255,0.1) calc(var(--wave-frequency) * 0.5),
+      rgba(0,0,0,0.6) calc(var(--wave-frequency) * 0.75),
+      rgba(255,255,255,0.4) var(--wave-frequency));
+  
+  backdrop-filter: blur(calc(var(--distortion-strength) * 0.8));
+  transform: translate(
+    calc(var(--refraction-direction-x) * var(--distortion-strength) * -0.2), 
+    calc(var(--refraction-direction-y) * var(--distortion-strength) * -0.2)
+  );
+  mix-blend-mode: soft-light;
+  opacity: calc(var(--wave-amplitude) * 0.4);
+  pointer-events: none;
+}
+
+/* Wave distortion parameter classes for different wave types */
+.wave-square {
+  --wave-frequency: 25px;
+  --wave-amplitude: 1.0;
+  --distortion-strength: 10px;
+}
+
+.wave-square::before {
   background: 
     repeating-linear-gradient(0deg,
-      transparent 0px,
-      rgba(255,255,255,0.04) 6px,
-      transparent 8px,
-      transparent 16px),
+      rgba(0,0,0,1) 0px,
+      rgba(0,0,0,1) calc(var(--wave-frequency) * 0.4),
+      rgba(255,255,255,0.4) calc(var(--wave-frequency) * 0.4),
+      rgba(255,255,255,0.4) calc(var(--wave-frequency) * 0.6),
+      rgba(0,0,0,1) calc(var(--wave-frequency) * 0.6),
+      rgba(0,0,0,1) var(--wave-frequency)),
     repeating-linear-gradient(90deg,
-      transparent 0px,
-      rgba(255,255,255,0.03) 6px,
-      transparent 8px,
-      transparent 16px);
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0.5;
+      rgba(0,0,0,0.8) 0px,
+      rgba(0,0,0,0.8) calc(var(--wave-frequency) * 0.4),
+      rgba(255,255,255,0.4) calc(var(--wave-frequency) * 0.4),
+      rgba(255,255,255,0.4) calc(var(--wave-frequency) * 0.6),
+      rgba(0,0,0,0.8) calc(var(--wave-frequency) * 0.6));
 }
 
-@keyframes fractalRotate {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.1); }
-  100% { transform: rotate(360deg) scale(1); }
+.wave-sawtooth {
+  --wave-frequency: 20px;
+  --wave-amplitude: 1.1;
+  --distortion-strength: 8px;
 }
 
-/* Expanded state with enhanced mosaic glass effect */
+.wave-sawtooth::before {
+  background: 
+    repeating-linear-gradient(0deg,
+      rgba(0,0,0,1) 0px,
+      rgba(255,255,255,0.4) var(--wave-frequency)),
+    repeating-linear-gradient(90deg,
+      rgba(0,0,0,0.7) 0px,
+      rgba(255,255,255,0.3) var(--wave-frequency));
+}
+
+/* Refraction direction modifiers */
+.refract-x {
+  --refraction-direction-x: 1;
+  --refraction-direction-y: 0;
+}
+
+.refract-y {
+  --refraction-direction-x: 0;
+  --refraction-direction-y: 1;
+}
+
+.refract-xy {
+  --refraction-direction-x: 0.7;
+  --refraction-direction-y: 0.7;
+}
+
+/* Expanded state with enhanced wave distortion */
 #modal-bubble.expanded {
   width: 80vw;
   height: 80vh;
   border-radius: 0; /* Sharp 90-degree corners */
   opacity: 1;
   border: 1px solid rgba(255,255,255,0.4);
-  backdrop-filter: blur(25px) saturate(130%);
   
-  background: 
-    repeating-linear-gradient(0deg, 
-      rgba(255,255,255,0.12) 0px, 
-      rgba(255,255,255,0.06) 6px, 
-      rgba(255,255,255,0.02) 10px,
-      rgba(0,0,0,0.04) 12px,
-      rgba(255,255,255,0.01) 16px,
-      rgba(255,255,255,0.08) 20px),
-    repeating-linear-gradient(90deg, 
-      rgba(255,255,255,0.10) 0px, 
-      rgba(255,255,255,0.04) 6px, 
-      rgba(255,255,255,0.01) 10px,
-      rgba(0,0,0,0.03) 12px,
-      rgba(255,255,255,0.02) 16px,
-      rgba(255,255,255,0.06) 20px),
-    linear-gradient(135deg, 
-      rgba(255,255,255,0.15) 0%, 
-      rgba(255,255,255,0.08) 30%, 
-      rgba(0,0,0,0.05) 70%,
-      rgba(255,255,255,0.10) 100%);
+  /* Enhanced parameters for expanded state */
+  --wave-frequency: 30px;
+  --wave-amplitude: 1.2;
+  --distortion-strength: 12px;
   
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px) saturate(130%);
   box-shadow: 
-    0 0 60px rgba(0, 255, 180, 0.15),
-    inset 0 1px 0 rgba(255,255,255,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.3),
     inset 0 -1px 0 rgba(0,0,0,0.1),
-    inset 1px 0 0 rgba(255,255,255,0.2),
-    inset -1px 0 0 rgba(0,0,0,0.05),
     0 20px 60px rgba(0,0,0,0.4);
 }
 
-/* Enhanced mosaic pattern when expanded */
+/* Enhanced wave patterns when expanded */
 #modal-bubble.expanded::before {
   background: 
-    repeating-linear-gradient(45deg,
-      rgba(255,255,255,0.10) 0px,
-      rgba(255,255,255,0.10) 1px,
-      rgba(255,255,255,0.03) 1px,
-      rgba(255,255,255,0.03) 8px,
-      rgba(0,0,0,0.04) 8px,
-      rgba(0,0,0,0.04) 9px),
-    repeating-linear-gradient(-45deg,
-      rgba(255,255,255,0.08) 0px,
-      rgba(255,255,255,0.08) 1px,
-      rgba(255,255,255,0.02) 1px,
-      rgba(255,255,255,0.02) 8px,
-      rgba(0,0,0,0.03) 8px,
-      rgba(0,0,0,0.03) 9px);
-  opacity: 0.6;
+    repeating-linear-gradient(0deg,
+      rgba(0,0,0,0.9) 0px,
+      rgba(0,0,0,0.7) calc(var(--wave-frequency) * 0.2),
+      rgba(255,255,255,0.3) calc(var(--wave-frequency) * 0.5),
+      rgba(0,0,0,0.7) calc(var(--wave-frequency) * 0.8),
+      rgba(0,0,0,0.9) var(--wave-frequency)),
+    repeating-linear-gradient(90deg,
+      rgba(0,0,0,0.6) 0px,
+      rgba(255,255,255,0.4) calc(var(--wave-frequency) * 0.3),
+      rgba(0,0,0,0.8) calc(var(--wave-frequency) * 0.7),
+      rgba(0,0,0,0.6) var(--wave-frequency));
+  
+  backdrop-filter: blur(calc(var(--distortion-strength) * 0.7));
+  transform: translate(
+    calc(var(--refraction-direction-x) * var(--distortion-strength) * 0.4), 
+    calc(var(--refraction-direction-y) * var(--distortion-strength) * 0.4)
+  );
+  opacity: calc(var(--wave-amplitude) * 0.5);
 }
 
 /* Iframe content inside bubble */
