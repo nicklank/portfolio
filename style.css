@@ -1,295 +1,277 @@
-/* General Page Styling */
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Helvetica Neue', sans-serif;
-  background-color: #0e0e0e;
-  color: #e0e0e0;
-  height: 100vh;
-  overflow: hidden;
-}
-body::before {
-  content: "";
-  position: fixed;
-  top: 0; left: 0;
-  width: 200%; /* Make it larger so we can move it without showing empty areas */
-  height: 200%;
-  pointer-events: none;
-  background: 
-    repeating-radial-gradient(circle, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 3px);
-  opacity: 0.2;
-  z-index: 1;
-  animation: drift 60s linear infinite;
-}
-@keyframes drift {
-  0% { background-position: 0 0; }
-  100% { background-position: 200px 200px; }
-}
-#network {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 2; /* Make sure your network sits above both grain and grid layers */
-}
-#filters {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 10;
-  display: flex;
-  gap: 10px;
-}
-#filters select {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: none;
-  font-size: 14px;
-  background-color: #1e1e1e;
-  color: #ffffff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-  appearance: none;
-}
-/* Graph container */
-#network {
-  width: 100%;
-  height: 100vh;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simplified Glass Modal</title>
+    <style>
+        /* General Page Styling */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', sans-serif;
+            background-color: #0e0e0e;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-/* Modal bubble overlay - No backdrop blur */
-#modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  z-index: 100;
-  justify-content: center;
-  align-items: center;
-}
+        /* Animated grain texture background */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; 
+            left: 0;
+            width: 200%;
+            height: 200%;
+            pointer-events: none;
+            background: repeating-radial-gradient(circle, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 3px);
+            opacity: 0.2;
+            z-index: 1;
+            animation: drift 60s linear infinite;
+        }
 
-/* Procedural Glass Modal Bubble with Wave Distortion */
-#modal-bubble {
-  position: absolute;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  
-  /* Glass distortion parameters */
-  --wave-frequency: 20px;
-  --wave-amplitude: 0.8;
-  --distortion-strength: 8px;
-  --refraction-direction-x: 1;
-  --refraction-direction-y: 0;
-  --wave-type: sine; /* sine, square, sawtooth */
-  
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.3);
-  backdrop-filter: blur(15px) saturate(120%);
-  
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  opacity: 0;
-}
+        @keyframes drift {
+            0% { background-position: 0 0; }
+            100% { background-position: 200px 200px; }
+        }
 
-/* Wave-based distortion layer 1 - Sine wave pattern */
-#modal-bubble::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  
-  /* Sine wave mask using radial gradients */
-  background: 
-    repeating-linear-gradient(0deg,
-      rgba(0,0,0,1) 0px,
-      rgba(0,0,0,0.8) calc(var(--wave-frequency) * 0.25),
-      rgba(255,255,255,0.2) calc(var(--wave-frequency) * 0.5),
-      rgba(0,0,0,0.8) calc(var(--wave-frequency) * 0.75),
-      rgba(0,0,0,1) var(--wave-frequency)),
-    repeating-linear-gradient(90deg,
-      rgba(0,0,0,0.7) 0px,
-      rgba(255,255,255,0.3) calc(var(--wave-frequency) * 0.5),
-      rgba(0,0,0,0.7) var(--wave-frequency));
-  
-  backdrop-filter: blur(calc(var(--distortion-strength) * 0.5));
-  transform: translate(
-    calc(var(--refraction-direction-x) * var(--distortion-strength) * 0.3), 
-    calc(var(--refraction-direction-y) * var(--distortion-strength) * 0.3)
-  );
-  mix-blend-mode: overlay;
-  opacity: calc(var(--wave-amplitude) * 0.6);
-  pointer-events: none;
-}
+        /* Network visualization container */
+        #network {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
+        }
 
-/* Wave-based distortion layer 2 - Offset refraction */
-#modal-bubble::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  
-  /* Inverted wave pattern for counter-distortion */
-  background: 
-    repeating-linear-gradient(90deg,
-      rgba(255,255,255,0.4) 0px,
-      rgba(0,0,0,0.6) calc(var(--wave-frequency) * 0.25),
-      rgba(255,255,255,0.1) calc(var(--wave-frequency) * 0.5),
-      rgba(0,0,0,0.6) calc(var(--wave-frequency) * 0.75),
-      rgba(255,255,255,0.4) var(--wave-frequency));
-  
-  backdrop-filter: blur(calc(var(--distortion-strength) * 0.8));
-  transform: translate(
-    calc(var(--refraction-direction-x) * var(--distortion-strength) * -0.2), 
-    calc(var(--refraction-direction-y) * var(--distortion-strength) * -0.2)
-  );
-  mix-blend-mode: soft-light;
-  opacity: calc(var(--wave-amplitude) * 0.4);
-  pointer-events: none;
-}
+        /* Filter controls */
+        #filters {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+        }
 
-/* Wave distortion parameter classes for different wave types */
-.wave-square {
-  --wave-frequency: 25px;
-  --wave-amplitude: 1.0;
-  --distortion-strength: 10px;
-}
+        #filters select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            appearance: none;
+        }
 
-.wave-square::before {
-  background: 
-    repeating-linear-gradient(0deg,
-      rgba(0,0,0,1) 0px,
-      rgba(0,0,0,1) calc(var(--wave-frequency) * 0.4),
-      rgba(255,255,255,0.4) calc(var(--wave-frequency) * 0.4),
-      rgba(255,255,255,0.4) calc(var(--wave-frequency) * 0.6),
-      rgba(0,0,0,1) calc(var(--wave-frequency) * 0.6),
-      rgba(0,0,0,1) var(--wave-frequency)),
-    repeating-linear-gradient(90deg,
-      rgba(0,0,0,0.8) 0px,
-      rgba(0,0,0,0.8) calc(var(--wave-frequency) * 0.4),
-      rgba(255,255,255,0.4) calc(var(--wave-frequency) * 0.4),
-      rgba(255,255,255,0.4) calc(var(--wave-frequency) * 0.6),
-      rgba(0,0,0,0.8) calc(var(--wave-frequency) * 0.6));
-}
+        /* Modal overlay */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
 
-.wave-sawtooth {
-  --wave-frequency: 20px;
-  --wave-amplitude: 1.1;
-  --distortion-strength: 8px;
-}
+        /* Simplified glass modal bubble */
+        #modal-bubble {
+            position: absolute;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            
+            /* Simple glass effect with gaussian blur */
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.2);
+            
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+        }
 
-.wave-sawtooth::before {
-  background: 
-    repeating-linear-gradient(0deg,
-      rgba(0,0,0,1) 0px,
-      rgba(255,255,255,0.4) var(--wave-frequency)),
-    repeating-linear-gradient(90deg,
-      rgba(0,0,0,0.7) 0px,
-      rgba(255,255,255,0.3) var(--wave-frequency));
-}
+        /* Expanded state */
+        #modal-bubble.expanded {
+            width: 80vw;
+            height: 80vh;
+            border-radius: 12px;
+            opacity: 1;
+            
+            /* Enhanced blur for expanded state */
+            backdrop-filter: blur(20px);
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
 
-/* Refraction direction modifiers */
-.refract-x {
-  --refraction-direction-x: 1;
-  --refraction-direction-y: 0;
-}
+        /* Content iframe */
+        #project-frame {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+        }
 
-.refract-y {
-  --refraction-direction-x: 0;
-  --refraction-direction-y: 1;
-}
+        /* Close button */
+        #close-modal {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            font-size: 18px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            color: #fff;
+            z-index: 101;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
 
-.refract-xy {
-  --refraction-direction-x: 0.7;
-  --refraction-direction-y: 0.7;
-}
+        #close-modal:hover {
+            background: rgba(255,255,255,0.25);
+            transform: scale(1.1);
+        }
 
-/* Expanded state with enhanced wave distortion */
-#modal-bubble.expanded {
-  width: 80vw;
-  height: 80vh;
-  border-radius: 0; /* Sharp 90-degree corners */
-  opacity: 1;
-  border: 1px solid rgba(255,255,255,0.4);
-  
-  /* Enhanced parameters for expanded state */
-  --wave-frequency: 30px;
-  --wave-amplitude: 1.2;
-  --distortion-strength: 12px;
-  
-  background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(20px) saturate(130%);
-  box-shadow: 
-    inset 0 1px 0 rgba(255,255,255,0.3),
-    inset 0 -1px 0 rgba(0,0,0,0.1),
-    0 20px 60px rgba(0,0,0,0.4);
-}
+        /* Demo content for testing */
+        .demo-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 3;
+        }
 
-/* Enhanced wave patterns when expanded */
-#modal-bubble.expanded::before {
-  background: 
-    repeating-linear-gradient(0deg,
-      rgba(0,0,0,0.9) 0px,
-      rgba(0,0,0,0.7) calc(var(--wave-frequency) * 0.2),
-      rgba(255,255,255,0.3) calc(var(--wave-frequency) * 0.5),
-      rgba(0,0,0,0.7) calc(var(--wave-frequency) * 0.8),
-      rgba(0,0,0,0.9) var(--wave-frequency)),
-    repeating-linear-gradient(90deg,
-      rgba(0,0,0,0.6) 0px,
-      rgba(255,255,255,0.4) calc(var(--wave-frequency) * 0.3),
-      rgba(0,0,0,0.8) calc(var(--wave-frequency) * 0.7),
-      rgba(0,0,0,0.6) var(--wave-frequency));
-  
-  backdrop-filter: blur(calc(var(--distortion-strength) * 0.7));
-  transform: translate(
-    calc(var(--refraction-direction-x) * var(--distortion-strength) * 0.4), 
-    calc(var(--refraction-direction-y) * var(--distortion-strength) * 0.4)
-  );
-  opacity: calc(var(--wave-amplitude) * 0.5);
-}
+        .demo-button {
+            padding: 12px 24px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
 
-/* Iframe content inside bubble */
-#project-frame {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  border: none;
-  position: relative;
-  z-index: 2;
-}
+        .demo-button:hover {
+            background: #1d4ed8;
+        }
 
-/* Close button with glass effect */
-#close-modal {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
-  font-size: 18px;
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 50%;
-  color: #fff;
-  z-index: 101;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
+        /* Sample background elements for blur testing */
+        .bg-element {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
 
-#close-modal:hover {
-  background: rgba(255,255,255,0.2);
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
+        .bg-element:nth-child(1) {
+            top: 10%;
+            left: 10%;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+        }
+
+        .bg-element:nth-child(2) {
+            top: 60%;
+            right: 15%;
+            background: linear-gradient(45deg, #48cae4, #023e8a);
+        }
+
+        .bg-element:nth-child(3) {
+            bottom: 20%;
+            left: 20%;
+            background: linear-gradient(45deg, #06ffa5, #7209b7);
+        }
+    </style>
+</head>
+<body>
+    <!-- Background elements for blur testing -->
+    <div class="bg-element"></div>
+    <div class="bg-element"></div>
+    <div class="bg-element"></div>
+
+    <!-- Main network container -->
+    <div id="network">
+        <!-- Filter controls -->
+        <div id="filters">
+            <select>
+                <option>All Categories</option>
+                <option>Technology</option>
+                <option>Science</option>
+                <option>Art</option>
+            </select>
+            <select>
+                <option>All Years</option>
+                <option>2024</option>
+                <option>2023</option>
+                <option>2022</option>
+            </select>
+        </div>
+
+        <!-- Demo content -->
+        <div class="demo-content">
+            <h1>Network Visualization</h1>
+            <p>Click the button below to test the glass modal effect</p>
+            <button class="demo-button" onclick="openModal()">Open Modal</button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal">
+        <div id="modal-bubble">
+            <button id="close-modal" onclick="closeModal()">×</button>
+            <iframe id="project-frame" src="about:blank"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            const modal = document.getElementById('modal');
+            const bubble = document.getElementById('modal-bubble');
+            
+            modal.style.display = 'flex';
+            
+            // Small delay to ensure display change takes effect
+            setTimeout(() => {
+                bubble.classList.add('expanded');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            const bubble = document.getElementById('modal-bubble');
+            
+            bubble.classList.remove('expanded');
+            
+            // Hide modal after transition completes
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 600);
+        }
+
+        // Close modal when clicking outside the bubble
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
