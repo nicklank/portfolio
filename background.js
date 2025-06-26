@@ -11,12 +11,15 @@ let mouseY = 0;
 let animationId;
 
 function initBackground() {
+  console.log('initBackground called');
+  
   canvas = document.getElementById('background-canvas');
   if (!canvas) {
-    console.warn('Background canvas not found');
+    console.error('Background canvas not found! Make sure you have <canvas id="background-canvas"></canvas> in your HTML');
     return;
   }
   
+  console.log('Canvas found:', canvas);
   ctx = canvas.getContext('2d');
   resizeCanvas();
   
@@ -24,7 +27,11 @@ function initBackground() {
   window.addEventListener('resize', resizeCanvas);
   document.addEventListener('mousemove', updateCursorPosition);
   
+  console.log('Generating dots...');
   generateDots();
+  console.log('Generated', dots.length, 'dots');
+  
+  console.log('Starting animation...');
   animateDots();
 }
 
@@ -57,34 +64,42 @@ function generateDots() {
 }
 
 function updateCursorPosition(e) {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
+  // Get mouse position relative to the canvas
+  const rect = canvas.getBoundingClientRect();
+  mouseX = e.clientX - rect.left;
+  mouseY = e.clientY - rect.top;
+  
+  // Debug: uncomment to see if mouse tracking works
+  console.log('Mouse position:', mouseX, mouseY);
 }
 
 function updateDotSizes() {
   dots.forEach(dot => {
-    // Calculate actual dot position including offset
-    const dotScreenX = dot.x + offsetX;
-    const dotScreenY = dot.y + offsetY;
-    
-    const dx = dotScreenX - mouseX;
-    const dy = dotScreenY - mouseY;
+    // Simple distance calculation without offset for testing
+    const dx = dot.x - mouseX;
+    const dy = dot.y - mouseY;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    const maxDistance = 150; // Proximity range
-    const maxScale = 3.5; // Maximum size multiplier
+    const maxDistance = 150;
     
     if (distance < maxDistance) {
+      // Much more obvious effect for testing
       const influence = 1 - (distance / maxDistance);
-      const scale = 1 + (influence * maxScale);
-      dot.targetSize = 1.5 * scale;
+      dot.size = 1.5 + (influence * 8); // Very large multiplier for testing
     } else {
-      dot.targetSize = 1.5;
+      dot.size = 1.5;
     }
-    
-    // Smooth interpolation to target size
-    dot.size += (dot.targetSize - dot.size) * 0.15;
   });
+  
+  // Always show mouse position for debugging
+  if (mouseX !== 0 && mouseY !== 0) {
+    console.log('Mouse:', mouseX.toFixed(0), mouseY.toFixed(0), 'Dots in range:', 
+                dots.filter(dot => {
+                  const dx = dot.x - mouseX;
+                  const dy = dot.y - mouseY;
+                  return Math.sqrt(dx * dx + dy * dy) < 150;
+                }).length);
+  }
 }
 
 function animateDots() {
