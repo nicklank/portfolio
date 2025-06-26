@@ -9,6 +9,7 @@ const tagMap = {};
 let network;
 let projects = [];
 let lastPosition = { x: 0, y: 0 };
+let physicsTimeout = null; // Track physics timeout to prevent multiple calls
 
 // ==============================
 // Data Fetch and Graph Build
@@ -64,44 +65,61 @@ function buildGraph() {
     }
   }
 
-  // ✅ MAKE SURE THIS IS HERE:
   const data = { nodes, edges };
 
-const options = {
-  physics: {
-    enabled: true,
-    stabilization: {
-      iterations: 200, // smooth start
-      updateInterval: 25
+  const options = {
+    physics: {
+      enabled: true,
+      stabilization: {
+        iterations: 200,
+        updateInterval: 25
+      },
+      barnesHut: {
+        gravitationalConstant: -2000,
+        springLength: 150,
+        springConstant: 0.04,
+        avoidOverlap: 0.5
+      }
     },
-    barnesHut: {
-      gravitationalConstant: -2000, // less aggressive
-      springLength: 150, // tighter, more stable
-      springConstant: 0.04,
-      avoidOverlap: 0.5 // helps prevent collisions
+    interaction: {
+      hover: true,
+      dragNodes: true
+    },
+    nodes: {
+      shape: "dot",
+      size: 15
+    },
+    edges: {
+      smooth: {
+        type: "curvedCCW",
+        roundness: 0.05
+      }
     }
-  },
-  interaction: {
-    hover: true,
-    dragNodes: true
-  },
-  nodes: {
-    shape: "dot",
-    size: 15
-  },
-  edges: {
-    smooth: {
-      type: "curvedCCW",
-      roundness: 0.05
-    }
-  }
-};
-
+  };
 
   network = new vis.Network(container, data, options);
   setupModalEvents();
 }
 
+// ==============================
+// Physics Control Helper
+// ==============================
+
+function safeSetPhysics(enabled) {
+  if (physicsTimeout) {
+    clearTimeout(physicsTimeout);
+    physicsTimeout = null;
+  }
+  
+  if (enabled) {
+    physicsTimeout = setTimeout(() => {
+      network.setOptions({ physics: { enabled: true } });
+      physicsTimeout = null;
+    }, 300);
+  } else {
+    network.setOptions({ physics: { enabled: false } });
+  }
+}
 
 // ==============================
 // Filtering Logic
@@ -109,22 +127,34 @@ const options = {
 
 function setupFilters() {
   ["materialSelect", "yearSelect", "categorySelect"].forEach((id) => {
-    document.getElementById(id).addEventListener("change", filterGraph);
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener("change", filterGraph);
+    }
   });
 }
 
 function filterGraph() {
-  const material = document.getElementById("materialSelect").value;
-  const year = document.getElementById("yearSelect").value;
-  const category = document.getElementById("categorySelect").value;
+  const materialEl = document.getElementById("materialSelect");
+  const yearEl = document.getElementById("yearSelect");
+  const categoryEl = document.getElementById("categorySelect");
+  
+  const material = materialEl ? materialEl.value : "";
+  const year = yearEl ? yearEl.value : "";
+  const category = categoryEl ? categoryEl.value : "";
 
   let firstMatchedNode = null;
 
-  // 🚨 Temporarily disable physics
-  network.setOptions({ physics: false });
+  // Safely disable physics
+  safeSetPhysics(false);
 
+  // Update nodes in batch to prevent multiple updates
+  const nodesToUpdate = [];
+  
   nodes.forEach((node) => {
     const project = projects.find((p) => p.id === node.id);
+    if (!project) return;
+    
     const tags = project.tags.map((t) => t.toLowerCase());
 
     const matchesMaterial = !material || tags.includes(material);
@@ -137,7 +167,7 @@ function filterGraph() {
       firstMatchedNode = node.id;
     }
 
-    nodes.update({
+    nodesToUpdate.push({
       id: node.id,
       value: match ? 30 : 10,
       color: match
@@ -154,6 +184,9 @@ function filterGraph() {
     });
   });
 
+  // Update all nodes at once
+  nodes.update(nodesToUpdate);
+
   if (firstMatchedNode) {
     network.focus(firstMatchedNode, {
       scale: 1.5,
@@ -161,12 +194,9 @@ function filterGraph() {
     });
   }
 
-  // ✅ Smoothly re-enable physics
-  setTimeout(() => {
-    network.setOptions({ physics: { enabled: true } });
-  }, 300);
+  // Re-enable physics after updates
+  safeSetPhysics(true);
 }
-
 
 // ==============================
 // Modal Setup
@@ -179,107 +209,119 @@ function setupModalEvents() {
       const project = projects.find((p) => p.id === nodeId);
       if (!project) return;
 
-      // 🚨 Temporarily disable physics
-      network.setOptions({ physics: false });
+      // Safely disable physics
+      safeSetPhysics(false);
 
-      // Reset all nodes
+      // Batch update all nodes
+      const nodesToUpdate = [];
+      
       nodes.forEach((node) => {
-        nodes.update({
+        nodesToUpdate.push({
           id: node.id,
-          value: 10,
-          color: {
-            background: "#1f1f1f",
-            border: "#666666",
-            highlight: { background: "#333", border: "#aaa" }
-          },
-          font: { color: "#ffffff", size: 14, bold: false }
+          value: node.id === nodeId ? 30 : 10,
+          color: node.id === nodeId 
+            ? {
+                background: "#ffffff",
+                border: "#89ffb8",
+                highlight: { background: "#ffffff", border: "#89ffb8" }
+              }
+            : {
+                background: "#1f1f1f",
+                border: "#666666",
+                highlight: { background: "#333", border: "#aaa" }
+              },
+          font: node.id === nodeId 
+            ? { color: "#ffffff", size: 24, bold: true }
+            : { color: "#ffffff", size: 14, bold: false }
         });
       });
 
-      // Highlight the clicked node
-      nodes.update({
-        id: nodeId,
-        value: 30,
-        color: {
-          background: "#ffffff",
-          border: "#89ffb8",
-          highlight: { background: "#ffffff", border: "#89ffb8" }
-        },
-        font: { color: "#ffffff", size: 24, bold: true }
-      });
+      // Update all nodes at once
+      nodes.update(nodesToUpdate);
 
-      // Smoothly re-enable physics after updates
-      setTimeout(() => {
-        network.setOptions({ physics: { enabled: true } });
-      }, 300);
+      // Re-enable physics
+      safeSetPhysics(true);
 
-      // Modal setup (same as before)
+      // Modal setup
       const bubble = document.getElementById("modal-bubble");
       const modal = document.getElementById("modal");
       const modalContent = document.getElementById("modal-content");
       const iframe = document.getElementById("project-frame");
 
-      iframe.src = "";
-      iframe.style.display = "none";
-      modalContent.innerHTML = "";
-
-      const titleElement = document.createElement("h2");
-      titleElement.textContent = project.title;
-
-      const descElement = document.createElement("p");
-      descElement.textContent = project.description || "No description provided.";
-
-      const imagesContainer = document.createElement("div");
-      imagesContainer.style.display = "flex";
-      imagesContainer.style.flexDirection = "column";
-      imagesContainer.style.gap = "10px";
-
-      if (project.images && project.images.length > 0) {
-        project.images.forEach((imgUrl) => {
-          const imgElement = document.createElement("img");
-          imgElement.src = imgUrl;
-          imgElement.style.maxWidth = "100%";
-          imagesContainer.appendChild(imgElement);
-        });
+      if (iframe) {
+        iframe.src = "";
+        iframe.style.display = "none";
+      }
+      
+      if (modalContent) {
+        modalContent.innerHTML = "";
       }
 
-      modalContent.appendChild(titleElement);
-      modalContent.appendChild(descElement);
-      modalContent.appendChild(imagesContainer);
+      if (modalContent) {
+        const titleElement = document.createElement("h2");
+        titleElement.textContent = project.title;
 
-      const pos = network.getPositions([nodeId])[nodeId];
-      const canvasPos = network.canvasToDOM(pos);
+        const descElement = document.createElement("p");
+        descElement.textContent = project.description || "No description provided.";
 
-      bubble.style.top = canvasPos.y + "px";
-      bubble.style.left = canvasPos.x + "px";
-      bubble.classList.remove("expanded");
+        const imagesContainer = document.createElement("div");
+        imagesContainer.style.display = "flex";
+        imagesContainer.style.flexDirection = "column";
+        imagesContainer.style.gap = "10px";
 
-      modal.style.display = "flex";
+        if (project.images && project.images.length > 0) {
+          project.images.forEach((imgUrl) => {
+            const imgElement = document.createElement("img");
+            imgElement.src = imgUrl;
+            imgElement.style.maxWidth = "100%";
+            imagesContainer.appendChild(imgElement);
+          });
+        }
 
-      requestAnimationFrame(() => {
-        bubble.classList.add("expanded");
-        bubble.style.top = "10vh";
-        bubble.style.left = "10vw";
-      });
+        modalContent.appendChild(titleElement);
+        modalContent.appendChild(descElement);
+        modalContent.appendChild(imagesContainer);
+      }
+
+      if (bubble && modal) {
+        const pos = network.getPositions([nodeId])[nodeId];
+        const canvasPos = network.canvasToDOM(pos);
+
+        bubble.style.top = canvasPos.y + "px";
+        bubble.style.left = canvasPos.x + "px";
+        bubble.classList.remove("expanded");
+
+        modal.style.display = "flex";
+
+        requestAnimationFrame(() => {
+          bubble.classList.add("expanded");
+          bubble.style.top = "10vh";
+          bubble.style.left = "10vw";
+        });
+      }
     }
   });
 
-  document.getElementById("close-modal").addEventListener("click", () => {
-    const bubble = document.getElementById("modal-bubble");
-    const iframe = document.getElementById("project-frame");
-    const modalContent = document.getElementById("modal-content");
+  const closeModal = document.getElementById("close-modal");
+  if (closeModal) {
+    closeModal.addEventListener("click", () => {
+      const bubble = document.getElementById("modal-bubble");
+      const iframe = document.getElementById("project-frame");
+      const modalContent = document.getElementById("modal-content");
+      const modal = document.getElementById("modal");
 
-    bubble.classList.remove("expanded");
+      if (bubble) {
+        bubble.classList.remove("expanded");
+      }
 
-    setTimeout(() => {
-      document.getElementById("modal").style.display = "none";
-      iframe.src = "";
-      modalContent.innerHTML = "";
-    }, 500);
-  });
+      setTimeout(() => {
+        if (modal) modal.style.display = "none";
+        if (iframe) iframe.src = "";
+        if (modalContent) modalContent.innerHTML = "";
+      }, 500);
+    });
+  }
 }
-
-
 
 // ==============================
 // Parallax Setup
@@ -299,7 +341,10 @@ function setupDragParallax() {
 
       lastPosition = { x: params.pointer.canvas.x, y: params.pointer.canvas.y };
 
-      shiftBackground(deltaX, deltaY);
+      // Only call shiftBackground if it exists
+      if (typeof shiftBackground === 'function') {
+        shiftBackground(deltaX, deltaY);
+      }
     }
   });
 }
