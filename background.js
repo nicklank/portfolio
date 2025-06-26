@@ -153,7 +153,7 @@ function animateDots() {
     updateDotSizes();
 
     // Set the drawing color for the dots (green with some transparency)
-    ctx.fillStyle = "rgba(137, 255, 184, 0.8)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
 
     // Draw each dot
     dots.forEach(dot => {
