@@ -67,30 +67,36 @@ function buildGraph() {
   // ✅ MAKE SURE THIS IS HERE:
   const data = { nodes, edges };
 
-  const options = {
-    physics: {
-      stabilization: false,
-      barnesHut: {
-        gravitationalConstant: -5000,
-        springLength: 300,
-        springConstant: 0.02
-      }
+const options = {
+  physics: {
+    enabled: true,
+    stabilization: {
+      iterations: 200, // smooth start
+      updateInterval: 25
     },
-    interaction: {
-      hover: true,
-      dragNodes: true
-    },
-    nodes: {
-      shape: "dot",
-      size: 15
-    },
-    edges: {
-      smooth: {
-        type: "curvedCCW", // Slight curve so we can see overlapping edges
-        roundness: 0.05
-      }
+    barnesHut: {
+      gravitationalConstant: -2000, // less aggressive
+      springLength: 150, // tighter, more stable
+      springConstant: 0.04,
+      avoidOverlap: 0.5 // helps prevent collisions
     }
-  };
+  },
+  interaction: {
+    hover: true,
+    dragNodes: true
+  },
+  nodes: {
+    shape: "dot",
+    size: 15
+  },
+  edges: {
+    smooth: {
+      type: "curvedCCW",
+      roundness: 0.05
+    }
+  }
+};
+
 
   network = new vis.Network(container, data, options);
   setupModalEvents();
@@ -153,6 +159,39 @@ function setupModalEvents() {
       const project = projects.find((p) => p.id === nodeId);
       if (!project) return;
 
+      // ===========================
+      // Reset All Nodes to Default
+      // ===========================
+      nodes.forEach((node) => {
+        nodes.update({
+          id: node.id,
+          value: 10,
+          color: {
+            background: "#1f1f1f",
+            border: "#666666",
+            highlight: { background: "#333", border: "#aaa" }
+          },
+          font: { color: "#ffffff", size: 14, bold: false }
+        });
+      });
+
+      // ===========================
+      // Highlight Clicked Node
+      // ===========================
+      nodes.update({
+        id: nodeId,
+        value: 30, // Make it bigger
+        color: {
+          background: "#ffffff",
+          border: "#89ffb8",
+          highlight: { background: "#ffffff", border: "#89ffb8" }
+        },
+        font: { color: "#ffffff", size: 24, bold: true }
+      });
+
+      // ===========================
+      // Modal Setup
+      // ===========================
       const bubble = document.getElementById("modal-bubble");
       const modal = document.getElementById("modal");
       const modalContent = document.getElementById("modal-content");
@@ -180,21 +219,6 @@ function setupModalEvents() {
           imgElement.style.maxWidth = "100%";
           imagesContainer.appendChild(imgElement);
         });
-      }
-
-      if (project.externalLink) {
-        const linkButton = document.createElement("a");
-        linkButton.href = project.externalLink;
-        linkButton.target = "_blank";
-        linkButton.textContent = "View Full Project";
-        linkButton.style.display = "inline-block";
-        linkButton.style.marginTop = "10px";
-        linkButton.style.padding = "8px 12px";
-        linkButton.style.backgroundColor = "#89ffb8";
-        linkButton.style.color = "#000";
-        linkButton.style.textDecoration = "none";
-        linkButton.style.borderRadius = "6px";
-        modalContent.appendChild(linkButton);
       }
 
       modalContent.appendChild(titleElement);
@@ -232,6 +256,7 @@ function setupModalEvents() {
     }, 500);
   });
 }
+
 
 // ==============================
 // Parallax Setup
