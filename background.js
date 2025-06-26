@@ -1,13 +1,13 @@
 // ==============================
-// Dot Matrix Background with Cursor Proximity Effect
+// Dot Matrix Background with Cursor Proximity and Drag Effect
 // ==============================
 
 let canvas, ctx;
 let dots = [];
 let offsetX = 0; // For background scrolling/shifting
 let offsetY = 0; // For background scrolling/shifting
-let mouseX = 0; // Current mouse X position
-let mouseY = 0; // Current mouse Y position
+let mouseX = 0; // Current mouse X position (for proximity effect)
+let mouseY = 0; // Current mouse Y position (for proximity effect)
 let animationId; // Stores the ID returned by requestAnimationFrame for cancellation
 
 let isDragging = false; // Flag to track if the mouse is currently dragging
@@ -16,7 +16,7 @@ let lastMouseY = 0;   // Stores the last Y position of the mouse during a drag
 
 /**
  * Initializes the background canvas and starts the animation.
- * Sets up event listeners for window resize and mouse movement.
+ * Sets up event listeners for window resize, mouse movement, and drag.
  */
 function initBackground() {
     canvas = document.getElementById('background-canvas');
@@ -28,9 +28,17 @@ function initBackground() {
     ctx = canvas.getContext('2d');
     resizeCanvas(); // Set initial canvas size and generate dots
 
-    // Event listeners for responsiveness and interactivity
+    // Event listeners for responsiveness, interactivity, and dragging
     window.addEventListener('resize', resizeCanvas);
-    document.addEventListener('mousemove', updateCursorPosition);
+    document.addEventListener('mousemove', updateCursorPosition); // For proximity effect
+
+    // === New Dragging Event Listeners ===
+    canvas.addEventListener('mousedown', startDragging);
+    // document.body is used for mouseup/mouseleave to ensure the drag stops even if
+    // the cursor leaves the canvas area while dragging, then button is released.
+    document.body.addEventListener('mouseup', stopDragging);
+    document.body.addEventListener('mouseleave', stopDragging); // In case mouse leaves window
+    // ===================================
 
     // Start the animation loop
     animateDots();
@@ -57,6 +65,9 @@ function generateDots() {
     const cols = Math.ceil(canvas.width / spacing) + 2;
     const rows = Math.ceil(canvas.height / spacing) + 2;
 
+    // The base size for dots when not influenced by the cursor
+    const initialBaseDotSize = 1.5;
+
     for (let col = 0; col < cols; col++) {
         for (let row = 0; row < rows; row++) {
             // Initial position (baseX, baseY) is slightly off-screen to handle offsets gracefully
@@ -67,8 +78,8 @@ function generateDots() {
                 baseY: y, // Original Y position without floating or offset
                 x: x,     // Current X position (affected by floating)
                 y: y,     // Current Y position (affected by floating)
-                size: 1.5, // Current rendered size of the dot
-                targetSize: 1.5 // Desired size (influenced by mouse proximity)
+                size: initialBaseDotSize, // Current rendered size of the dot
+                targetSize: initialBaseDotSize // Desired size (influenced by mouse proximity)
             });
         }
     }
@@ -76,12 +87,13 @@ function generateDots() {
 
 /**
  * Updates the global mouseX and mouseY variables based on cursor movement.
+ * Also handles dragging if `isDragging` flag is true.
  * @param {MouseEvent} e - The mouse event object.
  */
 function updateCursorPosition(e) {
+    // Update for proximity effect
     mouseX = e.clientX;
     mouseY = e.clientY;
-}
 
     // Handle dragging movement
     if (isDragging) {
@@ -111,7 +123,6 @@ function startDragging(e) {
 function stopDragging() {
     isDragging = false;
 }
-
 
 /**
  * Calculates and updates the target size of each dot based on its proximity to the cursor.
@@ -156,15 +167,15 @@ function updateDotSizes() {
  * This effect is based on time and the dot's index to create a gentle, varied motion.
  */
 function addSubtleFloating() {
-    const time = Date.now() * 0.003; // Convert current time to seconds for animation
-    const floatAmplitudeX = 0.7; // Max horizontal floating displacement
-    const floatAmplitudeY = 0.7; // Max vertical floating displacement
+    const time = Date.now() * 0.001; // Convert current time to seconds for animation
+    const floatAmplitudeX = 0.5; // Max horizontal floating displacement
+    const floatAmplitudeY = 0.3; // Max vertical floating displacement
 
     dots.forEach((dot, index) => {
         // Use sine and cosine waves for smooth, oscillating movement
         // Add index * offset to ensure dots don't move in perfect sync
-        const floatX = Math.sin(time + index * 0.2) * floatAmplitudeX;
-        const floatY = Math.cos(time + index * 0.2) * floatAmplitudeY;
+        const floatX = Math.sin(time + index * 0.1) * floatAmplitudeX;
+        const floatY = Math.cos(time + index * 0.15) * floatAmplitudeY;
 
         // Apply floating movement relative to the base (original) position
         dot.x = dot.baseX + floatX;
@@ -187,7 +198,7 @@ function animateDots() {
     updateDotSizes();
 
     // Set the drawing color for the dots (green with some transparency)
-    ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+    ctx.fillStyle = "rgba(137, 255, 184, 0.8)";
 
     // Draw each dot
     dots.forEach(dot => {
