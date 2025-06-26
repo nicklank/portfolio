@@ -167,15 +167,15 @@ function updateDotSizes() {
  * This effect is based on time and the dot's index to create a gentle, varied motion.
  */
 function addSubtleFloating() {
-    const time = Date.now() * 0.005; // Convert current time to seconds for animation
-    const floatAmplitudeX = 0.8; // Max horizontal floating displacement
-    const floatAmplitudeY = 0.8; // Max vertical floating displacement
+    const time = Date.now() * 0.002; // Convert current time to seconds for animation
+    const floatAmplitudeX = 0.5; // Max horizontal floating displacement
+    const floatAmplitudeY = 0.5; // Max vertical floating displacement
 
     dots.forEach((dot, index) => {
         // Use sine and cosine waves for smooth, oscillating movement
         // Add index * offset to ensure dots don't move in perfect sync
         const floatX = Math.sin(time + index * 0.1) * floatAmplitudeX;
-        const floatY = Math.cos(time + index * 0.15) * floatAmplitudeY;
+        const floatY = Math.cos(time + index * 0.18) * floatAmplitudeY;
 
         // Apply floating movement relative to the base (original) position
         dot.x = dot.baseX + floatX;
