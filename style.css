@@ -86,9 +86,9 @@ body::before {
   height: 0px;
   
   /* Simple glass effect with gaussian blur */
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.0);
   border: 1px solid rgba(255,255,255,0.05);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(10px);
   
   transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
@@ -103,10 +103,10 @@ body::before {
   height: 80vh;
   border-radius: 0; /* Sharp 90-degree corners as in your original */
   opacity: 1;
-  border: 1px solid rgba(255,255,255,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
   
-  background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(20px);
+  background: rgba(255,255,255,0.0);
+  backdrop-filter: blur(10px);
 }
 
 /* Iframe content inside bubble */
@@ -140,6 +140,7 @@ body::before {
   transition: all 0.3s ease;
 }
 
+/* X button in top right*/
 #close-modal:hover {
   background: rgba(255,255,255,0.2);
   transform: scale(1.1);
