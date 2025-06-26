@@ -8,8 +8,6 @@ const edges = new vis.DataSet();
 const tagMap = {};
 let network;
 let projects = [];
-let lastPosition = { x: 0, y: 0 };
-let physicsTimeout = null; // Track physics timeout to prevent multiple calls
 
 // ==============================
 // Data Fetch and Graph Build
@@ -21,12 +19,16 @@ fetch("projects.json")
     projects = data;
     buildGraph();
     setupFilters();
-    setupDragParallax();
-    initBackground(); // Initialize dot matrix
-    startNodeFloating(); // Add subtle floating effect
+  })
+  .catch((error) => {
+    console.error("Error loading projects:", error);
   });
 
 function buildGraph() {
+  // Clear existing data
+  nodes.clear();
+  edges.clear();
+  
   // Build nodes
   projects.forEach((project) => {
     nodes.add({
@@ -40,8 +42,8 @@ function buildGraph() {
           border: "#ffffff"
         }
       },
-      font: { color: "#ffffff" },
-      value: 10
+      font: { color: "#ffffff", size: 14 },
+      value: 15
     });
 
     // Build tag map for edges
@@ -59,7 +61,8 @@ function buildGraph() {
         edges.add({
           from: related[i],
           to: related[j],
-          color: { color: "#777" }
+          color: { color: "#777777" },
+          width: 1
         });
       }
     }
@@ -67,62 +70,62 @@ function buildGraph() {
 
   const data = { nodes, edges };
 
+  // Simplified, stable physics options
   const options = {
     physics: {
       enabled: true,
       stabilization: {
-        iterations: 200,
-        updateInterval: 25
+        enabled: true,
+        iterations: 100,
+        updateInterval: 50,
+        fit: true
       },
       barnesHut: {
-        gravitationalConstant: -2000,
-        springLength: 150,
-        springConstant: 0.04,
-        avoidOverlap: 0.5
-      }
+        gravitationalConstant: -1000,
+        centralGravity: 0.1,
+        springLength: 200,
+        springConstant: 0.02,
+        damping: 0.95,
+        avoidOverlap: 0.2
+      },
+      maxVelocity: 20,
+      minVelocity: 0.1,
+      solver: 'barnesHut',
+      timestep: 0.5
     },
     interaction: {
       hover: true,
-      dragNodes: true
+      dragNodes: true,
+      dragView: true,
+      zoomView: true
     },
     nodes: {
       shape: "dot",
-      size: 15
+      size: 15,
+      borderWidth: 2,
+      shadow: false
     },
     edges: {
       smooth: {
-        type: "curvedCCW",
-        roundness: 0.05
-      }
+        enabled: true,
+        type: "continuous",
+        roundness: 0.2
+      },
+      shadow: false
     }
   };
 
   network = new vis.Network(container, data, options);
   setupModalEvents();
-}
-
-// ==============================
-// Physics Control Helper
-// ==============================
-
-function safeSetPhysics(enabled) {
-  if (physicsTimeout) {
-    clearTimeout(physicsTimeout);
-    physicsTimeout = null;
-  }
   
-  if (enabled) {
-    physicsTimeout = setTimeout(() => {
-      network.setOptions({ physics: { enabled: true } });
-      physicsTimeout = null;
-    }, 300);
-  } else {
-    network.setOptions({ physics: { enabled: false } });
-  }
+  // Wait for stabilization before allowing interactions
+  network.once("stabilizationIterationsDone", function() {
+    console.log("Network stabilized");
+  });
 }
 
 // ==============================
-// Filtering Logic
+// Filtering Logic (Simplified)
 // ==============================
 
 function setupFilters() {
@@ -144,11 +147,6 @@ function filterGraph() {
   const category = categoryEl ? categoryEl.value : "";
 
   let firstMatchedNode = null;
-
-  // Safely disable physics
-  safeSetPhysics(false);
-
-  // Update nodes in batch to prevent multiple updates
   const nodesToUpdate = [];
   
   nodes.forEach((node) => {
@@ -169,7 +167,7 @@ function filterGraph() {
 
     nodesToUpdate.push({
       id: node.id,
-      value: match ? 30 : 10,
+      value: match ? 25 : 15,
       color: match
         ? {
             background: "#89ffb8",
@@ -179,7 +177,7 @@ function filterGraph() {
         : {
             background: "#1f1f1f",
             border: "#666666",
-            highlight: { background: "#333", border: "#aaa" }
+            highlight: { background: "#333333", border: "#aaaaaa" }
           }
     });
   });
@@ -187,19 +185,19 @@ function filterGraph() {
   // Update all nodes at once
   nodes.update(nodesToUpdate);
 
+  // Focus on first matched node if found
   if (firstMatchedNode) {
-    network.focus(firstMatchedNode, {
-      scale: 1.5,
-      animation: { duration: 500, easingFunction: "easeInOutQuad" }
-    });
+    setTimeout(() => {
+      network.focus(firstMatchedNode, {
+        scale: 1.2,
+        animation: { duration: 800, easingFunction: "easeInOutQuad" }
+      });
+    }, 100);
   }
-
-  // Re-enable physics after updates
-  safeSetPhysics(true);
 }
 
 // ==============================
-// Modal Setup
+// Modal Setup (Simplified)
 // ==============================
 
 function setupModalEvents() {
@@ -209,16 +207,13 @@ function setupModalEvents() {
       const project = projects.find((p) => p.id === nodeId);
       if (!project) return;
 
-      // Safely disable physics
-      safeSetPhysics(false);
-
-      // Batch update all nodes
+      // Simple node highlighting without physics manipulation
       const nodesToUpdate = [];
       
       nodes.forEach((node) => {
         nodesToUpdate.push({
           id: node.id,
-          value: node.id === nodeId ? 30 : 10,
+          value: node.id === nodeId ? 30 : 15,
           color: node.id === nodeId 
             ? {
                 background: "#ffffff",
@@ -228,19 +223,15 @@ function setupModalEvents() {
             : {
                 background: "#1f1f1f",
                 border: "#666666",
-                highlight: { background: "#333", border: "#aaa" }
+                highlight: { background: "#333333", border: "#aaaaaa" }
               },
           font: node.id === nodeId 
-            ? { color: "#ffffff", size: 24, bold: true }
+            ? { color: "#000000", size: 16, bold: true }
             : { color: "#ffffff", size: 14, bold: false }
         });
       });
 
-      // Update all nodes at once
       nodes.update(nodesToUpdate);
-
-      // Re-enable physics
-      safeSetPhysics(true);
 
       // Modal setup
       const bubble = document.getElementById("modal-bubble");
@@ -248,6 +239,7 @@ function setupModalEvents() {
       const modalContent = document.getElementById("modal-content");
       const iframe = document.getElementById("project-frame");
 
+      // Clear previous content
       if (iframe) {
         iframe.src = "";
         iframe.style.display = "none";
@@ -255,71 +247,71 @@ function setupModalEvents() {
       
       if (modalContent) {
         modalContent.innerHTML = "";
-      }
 
-      if (modalContent) {
         const titleElement = document.createElement("h2");
         titleElement.textContent = project.title;
+        titleElement.style.color = "#ffffff";
+        titleElement.style.marginBottom = "10px";
 
         const descElement = document.createElement("p");
         descElement.textContent = project.description || "No description provided.";
+        descElement.style.color = "#cccccc";
+        descElement.style.lineHeight = "1.5";
 
-        const imagesContainer = document.createElement("div");
-        imagesContainer.style.display = "flex";
-        imagesContainer.style.flexDirection = "column";
-        imagesContainer.style.gap = "10px";
+        modalContent.appendChild(titleElement);
+        modalContent.appendChild(descElement);
 
+        // Add images if they exist
         if (project.images && project.images.length > 0) {
+          const imagesContainer = document.createElement("div");
+          imagesContainer.style.display = "flex";
+          imagesContainer.style.flexDirection = "column";
+          imagesContainer.style.gap = "10px";
+          imagesContainer.style.marginTop = "15px";
+
           project.images.forEach((imgUrl) => {
             const imgElement = document.createElement("img");
             imgElement.src = imgUrl;
             imgElement.style.maxWidth = "100%";
+            imgElement.style.borderRadius = "5px";
             imagesContainer.appendChild(imgElement);
           });
+          
+          modalContent.appendChild(imagesContainer);
         }
-
-        modalContent.appendChild(titleElement);
-        modalContent.appendChild(descElement);
-        modalContent.appendChild(imagesContainer);
       }
 
+      // Show modal
       if (bubble && modal) {
-        const pos = network.getPositions([nodeId])[nodeId];
-        const canvasPos = network.canvasToDOM(pos);
-
-        bubble.style.top = canvasPos.y + "px";
-        bubble.style.left = canvasPos.x + "px";
-        bubble.classList.remove("expanded");
-
         modal.style.display = "flex";
-
-        requestAnimationFrame(() => {
+        
+        setTimeout(() => {
           bubble.classList.add("expanded");
-          bubble.style.top = "10vh";
-          bubble.style.left = "10vw";
-        });
+        }, 50);
       }
     }
   });
 
+  // Close modal handler
   const closeModal = document.getElementById("close-modal");
   if (closeModal) {
-    closeModal.addEventListener("click", () => {
-      const bubble = document.getElementById("modal-bubble");
-      const iframe = document.getElementById("project-frame");
-      const modalContent = document.getElementById("modal-content");
-      const modal = document.getElementById("modal");
-
-      if (bubble) {
-        bubble.classList.remove("expanded");
-      }
-
-      setTimeout(() => {
-        if (modal) modal.style.display = "none";
-        if (iframe) iframe.src = "";
-        if (modalContent) modalContent.innerHTML = "";
-      }, 500);
-    });
+    closeModal.addEventListener("click", closeModalHandler);
   }
 }
 
+function closeModalHandler() {
+  const bubble = document.getElementById("modal-bubble");
+  const iframe = document.getElementById("project-frame");
+  const modalContent = document.getElementById("modal-content");
+  const modal = document.getElementById("modal");
+
+  if (bubble) {
+    bubble.classList.remove("expanded");
+  }
+
+  setTimeout(() => {
+    if (modal) modal.style.display = "none";
+    if (iframe) iframe.src = "";
+    if (modalContent) modalContent.innerHTML = "";
+  }, 300);
+}
