@@ -64,7 +64,7 @@ function buildGraph() {
     }
   }
 
-  // ✅ ADD THIS BACK:
+  // ✅ MAKE SURE THIS IS HERE:
   const data = { nodes, edges };
 
   const options = {
@@ -86,7 +86,7 @@ function buildGraph() {
     },
     edges: {
       smooth: {
-        type: "curvedCCW",
+        type: "curvedCCW", // Slight curve so we can see overlapping edges
         roundness: 0.05
       }
     }
@@ -94,7 +94,6 @@ function buildGraph() {
 
   network = new vis.Network(container, data, options);
   setupModalEvents();
-  setupDragParallax();
 }
 
 
