@@ -75,30 +75,36 @@ function updateCursorPosition(e) {
 
 function updateDotSizes() {
   dots.forEach(dot => {
-    // Simple distance calculation without offset for testing
-    const dx = dot.x - mouseX;
-    const dy = dot.y - mouseY;
+    // Calculate actual dot position including offset
+    const dotScreenX = dot.x + offsetX;
+    const dotScreenY = dot.y + offsetY;
+    
+    // Calculate distance from mouse to dot
+    const dx = dotScreenX - mouseX;
+    const dy = dotScreenY - mouseY;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    const maxDistance = 150;
+    const maxDistance = 150; // Proximity range
+    const maxScale = 4; // Maximum size multiplier
     
     if (distance < maxDistance) {
-      // Much more obvious effect for testing
+      // Create smooth falloff effect
       const influence = 1 - (distance / maxDistance);
-      dot.size = 1.5 + (influence * 8); // Very large multiplier for testing
+      const easeInfluence = influence * influence; // Smoother falloff
+      const scale = 1 + (easeInfluence * maxScale);
+      dot.targetSize = 1.5 * scale;
     } else {
-      dot.size = 1.5;
+      dot.targetSize = 1.5;
     }
+    
+    // Smooth interpolation to target size (faster response)
+    dot.size += (dot.targetSize - dot.size) * 0.3;
   });
   
-  // Always show mouse position for debugging
-  if (mouseX !== 0 && mouseY !== 0) {
-    console.log('Mouse:', mouseX.toFixed(0), mouseY.toFixed(0), 'Dots in range:', 
-                dots.filter(dot => {
-                  const dx = dot.x - mouseX;
-                  const dy = dot.y - mouseY;
-                  return Math.sqrt(dx * dx + dy * dy) < 150;
-                }).length);
+  // Debug: Show how many dots are being affected
+  const affectedDots = dots.filter(dot => dot.size > 1.6).length;
+  if (affectedDots > 0) {
+    console.log('Affected dots:', affectedDots, 'Mouse:', mouseX, mouseY);
   }
 }
 
