@@ -10,6 +10,10 @@ let mouseX = 0; // Current mouse X position
 let mouseY = 0; // Current mouse Y position
 let animationId; // Stores the ID returned by requestAnimationFrame for cancellation
 
+let isDragging = false; // Flag to track if the mouse is currently dragging
+let lastMouseX = 0;   // Stores the last X position of the mouse during a drag
+let lastMouseY = 0;   // Stores the last Y position of the mouse during a drag
+
 /**
  * Initializes the background canvas and starts the animation.
  * Sets up event listeners for window resize and mouse movement.
@@ -78,6 +82,36 @@ function updateCursorPosition(e) {
     mouseX = e.clientX;
     mouseY = e.clientY;
 }
+
+    // Handle dragging movement
+    if (isDragging) {
+        const deltaX = mouseX - lastMouseX;
+        const deltaY = mouseY - lastMouseY;
+        shiftBackground(deltaX, deltaY); // Move the entire background
+        lastMouseX = mouseX; // Update last position for next frame
+        lastMouseY = mouseY;
+    }
+}
+
+/**
+ * Starts the dragging process when the mouse button is pressed down on the canvas.
+ * @param {MouseEvent} e - The mouse event object.
+ */
+function startDragging(e) {
+    isDragging = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+    // Optional: Prevent default browser dragging behavior for images/text
+    e.preventDefault();
+}
+
+/**
+ * Stops the dragging process when the mouse button is released or leaves the window.
+ */
+function stopDragging() {
+    isDragging = false;
+}
+
 
 /**
  * Calculates and updates the target size of each dot based on its proximity to the cursor.
@@ -206,6 +240,9 @@ function cleanupBackground() {
     }
     window.removeEventListener('resize', resizeCanvas);
     document.removeEventListener('mousemove', updateCursorPosition);
+    canvas.removeEventListener('mousedown', startDragging);
+    document.body.removeEventListener('mouseup', stopDragging);
+    document.body.removeEventListener('mouseleave', stopDragging);
 }
 
 // Automatically initialize the background when the window loads
