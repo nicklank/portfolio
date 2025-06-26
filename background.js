@@ -129,9 +129,9 @@ function stopDragging() {
  * Dots closer to the cursor will have a larger targetSize.
  */
 function updateDotSizes() {
-    const maxDistance = 150; // The maximum distance from the cursor for a dot to be affected
-    const baseSize = 1.5;    // The default size of dots when not influenced by the cursor
-    const maxScale = 3.5;    // Maximum multiplier for dot size when directly under the cursor
+    const maxDistance = 170; // The maximum distance from the cursor for a dot to be affected
+    const baseSize = 1;    // The default size of dots when not influenced by the cursor
+    const maxScale = 3;    // Maximum multiplier for dot size when directly under the cursor
 
     dots.forEach(dot => {
         // Calculate the dot's current screen position, taking into account the background offset.
@@ -167,9 +167,9 @@ function updateDotSizes() {
  * This effect is based on time and the dot's index to create a gentle, varied motion.
  */
 function addSubtleFloating() {
-    const time = Date.now() * 0.001; // Convert current time to seconds for animation
-    const floatAmplitudeX = 0.5; // Max horizontal floating displacement
-    const floatAmplitudeY = 0.3; // Max vertical floating displacement
+    const time = Date.now() * 0.005; // Convert current time to seconds for animation
+    const floatAmplitudeX = 0.8; // Max horizontal floating displacement
+    const floatAmplitudeY = 0.8; // Max vertical floating displacement
 
     dots.forEach((dot, index) => {
         // Use sine and cosine waves for smooth, oscillating movement
@@ -198,7 +198,7 @@ function animateDots() {
     updateDotSizes();
 
     // Set the drawing color for the dots (green with some transparency)
-    ctx.fillStyle = "rgba(137, 255, 184, 0.8)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
 
     // Draw each dot
     dots.forEach(dot => {
