@@ -146,8 +146,7 @@ function sendBackgroundUpdate() {
   const position = network.getViewPosition(); // {x, y}
   const scale = network.getScale(); // zoom level
 
-  updateBackgroundTarget(position, scale);
-}
+  updateBackgroundTarget({ x: -position.x, y: -position.y }, scale);
 
 // ==============================
 // Filtering Logic (unchanged)
