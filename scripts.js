@@ -120,23 +120,23 @@ function buildGraph() {
       },
       barnesHut: {
         gravitationalConstant: -1000,
-        centralGravity: 0.1,
-        springLength: 200,
-        springConstant: 0.02,
-        damping: 0.95,
+        centralGravity: .1,
+        springLength: 250,
+        springConstant: 0.03,
+        damping: 0.65,
         avoidOverlap: 0.2
       },
-      maxVelocity: 20,
-      minVelocity: 0.1,
+      maxVelocity: 30,
+      minVelocity: 0.01,
       solver: 'barnesHut',
-      timestep: 0.5
+      timestep: 0.1
     },
     interaction: {
       hover: true,
       dragNodes: true,
       dragView: true,
       zoomView: true,
-      zoomSpeed: 0.5,
+      zoomSpeed: 1,
       multiselect: true,
       navigationButtons: false,
       tooltipDelay: 200
@@ -160,32 +160,11 @@ function buildGraph() {
   network = new vis.Network(container, data, options);
   setupModalEvents();
 
+  
+
   setupNodeHoverImage(projects); // <-- Add this here, after network is created
 
-  
-  function addSubtleMovement() {
-    if (!network) return;
-  
-    // Add tiny random velocities to all nodes every few seconds
-    const nodeIds = nodes.getIds();
-    nodeIds.forEach(nodeId => {
-      const randomVelocity = {
-        x: (Math.random() - 0.5) * 3, // Very small random velocity
-        y: (Math.random() - 0.5) * 3
-      };
-    
-      // Apply the tiny velocity
-      network.moveNode(nodeId, 
-        network.getPositions([nodeId])[nodeId].x + randomVelocity.x,
-        network.getPositions([nodeId])[nodeId].y + randomVelocity.y
-      );
-    });
-  }
 
-  // Start the subtle movement loop
-  function startSubtleMovement() {
-    setInterval(addSubtleMovement, 3000); // Every 3 seconds
-  }
 
 
 
@@ -234,12 +213,13 @@ function buildGraph() {
     console.log("Network stabilized");
   });
 
-  startSubtleMovement(); // Start the subtle movement loop
   // Re-setup light mode toggle after network rebuild
   document.getElementById('toggle-lightmode').removeEventListener('change', lightModeHandler);
   document.getElementById('toggle-lightmode').addEventListener('change', lightModeHandler);
 
 }
+
+
 
 // ==============================
 // Background Sync Handler (NEW)

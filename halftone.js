@@ -15,7 +15,7 @@ class HalftoneEffect {
     this.config = {
       spacing: 15,
       maxSize: 12,
-      minSize: 2,
+      minSize: 0,
       contrast: 1.0,
       threshold: 128,
       angle: 0,
