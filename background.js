@@ -37,7 +37,7 @@ function updateCursorPosition(e) {
 }
 
 export function updateBackgroundTarget(position, newScale, center) {
-    // Always use the position and scale from vis.js, ignore center
+    // Just use the position and scale from scripts.js
     targetX = position.x;
     targetY = position.y;
     targetScale = newScale;
@@ -111,8 +111,68 @@ function addSubtleFloating() {
     });
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Simple efficient grain specs (replacing the big slow specs)
+function drawAnimatedNoise() {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; // Adjust opacity to taste
+    
+    for (let i = 0; i < 50; i++) { // 50 pixels per frame
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        // Vary size occasionally for more organic feel
+        const size = Math.random() > 0.8 ? 2 : 1;
+        ctx.fillRect(x, y, size, size);
+    }
+}
+
+// Fine grain using ImageData (back to image-based approach)
+function drawFineGrain() {
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Create smaller area for performance but tile it
+    const tileSize = 200; // Small tile to reduce processing
+    const imageData = ctx.createImageData(tileSize, tileSize);
+    const data = imageData.data;
+    
+    // Generate fine grain pattern
+    for (let i = 0; i < data.length; i += 4) {
+        if (Math.random() > 0.92) { // Only 8% of pixels get grain
+            const intensity = Math.random() * 60; // Subtle intensity
+            data[i] = intensity;     // Red
+            data[i + 1] = intensity; // Green  
+            data[i + 2] = intensity; // Blue
+            data[i + 3] = 60;         // Low alpha for subtlety
+        }
+    }
+    
+    // Tile the small grain pattern across the screen
+    for (let x = 0; x < width; x += tileSize) {
+        for (let y = 0; y < height; y += tileSize) {
+            ctx.putImageData(imageData, x, y);
+        }
+    }
+}
+
 function animateDots() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // ADD BOTH NOISE LAYERS HERE - fine grain first (background), then big specs (foreground)
+    drawFineGrain();
+    drawAnimatedNoise();
 
     // Smooth position and zoom
     offsetX += (targetX - offsetX) * 0.05;
