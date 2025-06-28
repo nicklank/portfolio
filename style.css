@@ -9,6 +9,11 @@ body {
   overflow: hidden;
 }
 
+body.light-mode {
+  background-color: #f7f2e3; /* Light cream */
+  color: #222;
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -16,16 +21,9 @@ body::before {
   width: 200%; /* Make it larger so we can move it without showing empty areas */
   height: 200%;
   pointer-events: none;
-  background: 
-    repeating-radial-gradient(circle, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 3px);
   opacity: 0.2;
   z-index: 1;
   animation: drift 60s linear infinite;
-}
-
-@keyframes drift {
-  0% { background-position: 0 0; }
-  100% { background-position: 200px 200px; }
 }
 
 #network {

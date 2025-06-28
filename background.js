@@ -15,6 +15,8 @@ let mouseY = 0;
 
 let animationId;
 
+let isLightMode = false;
+
 function initBackground() {
     canvas = document.getElementById('background-canvas');
     if (!canvas) {
@@ -111,20 +113,6 @@ function addSubtleFloating() {
     });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Simple efficient grain specs (replacing the big slow specs)
 function drawAnimatedNoise() {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; // Adjust opacity to taste
@@ -182,7 +170,9 @@ function animateDots() {
     addSubtleFloating();
     updateDotSizes();
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+    ctx.fillStyle = isLightMode
+    ? "rgba(67, 153, 102, 0.8)"   // Light green for light mode
+    : "rgba(255, 255, 255, 0.2)"; // Grey/white for dark mode
 
     dots.forEach(dot => {
         const screenX = (dot.x + offsetX) * scale;
@@ -208,3 +198,7 @@ function cleanupBackground() {
 }
 
 window.addEventListener('load', initBackground);
+
+export function setBackgroundLightMode(light) {
+    isLightMode = light;
+}

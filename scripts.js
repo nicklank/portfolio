@@ -14,7 +14,7 @@ let filterEdges = new vis.DataSet();
 // Import Background Control
 // ==============================
 
-import { updateBackgroundTarget } from './background.js'; // NEW
+import { updateBackgroundTarget, setBackgroundLightMode } from './background.js';
 
 // ==============================
 // Data Fetch and Graph Build
@@ -472,4 +472,18 @@ function setupNodeHoverImage(projects) {
     img.style.display = "none"; // <-- Hide the image
   });
 }
+
+// ==============================
+// Light Mode Toggle (NEW)
+// ==============================
+
+document.getElementById('toggle-lightmode').addEventListener('change', function(e) {
+  if (e.target.checked) {
+    document.body.classList.add('light-mode');
+    setBackgroundLightMode(true);
+  } else {
+    document.body.classList.remove('light-mode');
+    setBackgroundLightMode(false);
+  }
+});
 
