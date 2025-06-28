@@ -8,6 +8,7 @@ const edges = new vis.DataSet();
 const tagMap = {};
 let network;
 let projects = [];
+let filterEdges = new vis.DataSet();
 
 // ==============================
 // Import Background Control
@@ -60,20 +61,50 @@ function buildGraph() {
     });
   });
 
-  // Build edges
+
+
+  
+  // Build edges with shared tag weighting
   for (let tag in tagMap) {
     const related = tagMap[tag];
     for (let i = 0; i < related.length; i++) {
       for (let j = i + 1; j < related.length; j++) {
+        const projectA = projects.find(p => p.id === related[i]);
+        const projectB = projects.find(p => p.id === related[j]);
+
+        const sharedTags = projectA.tags.filter(tag => projectB.tags.includes(tag)).length;
+
+        // Calculate edge length: more shared tags = shorter edge
+        const length = Math.max(50, 300 - sharedTags * 50); // 300= max loose dist, 50 = min tight dist, 
+        // 50 = how strong shared tags pull nodes together (higher = tighter edges)
+
+        const edgeWidth = .5 + sharedTags * 0.3; // Optional: make edges thicker if they are stronger
+
         edges.add({
           from: related[i],
           to: related[j],
-          color: { color: "#777777" },
-          width: 1
+          color: { color: "#555555" },
+          width: edgeWidth,
+          length: length,
+          label: '', // start with no label
+          hiddenTag: tag, // store the tag for later use
+          font: {
+            size: 12,
+            color: "#ffffff",
+            strokeWidth: 2,
+            strokeColor: "#000000",
+            background: "rgba(0, 0, 0, 0.5)",
+            align: "top"
+          },
+          smooth: {
+            type: "cubicBezier",
+            roundness: Math.random() * 0.5 + 0.1 
+          }
         });
       }
     }
   }
+
 
   const data = { nodes, edges };
 
@@ -101,20 +132,25 @@ function buildGraph() {
     },
     interaction: {
       hover: true,
+      hoverEdges: true,
       dragNodes: true,
       dragView: true,
-      zoomView: true
+      zoomView: true,
+      zoomSpeed: 0.5,
+      multiselect: true,
+      navigationButtons: false,
+      tooltipDelay: 200
     },
     nodes: {
-      shape: "dot",
-      size: 15,
-      borderWidth: 2,
+      shape: "square",
+      size: 10,
+      borderWidth: .5,
       shadow: false
     },
     edges: {
       smooth: {
         enabled: true,
-        type: "continuous",
+        type: "cubicBezier",
         roundness: 0.2
       },
       shadow: false
@@ -123,6 +159,47 @@ function buildGraph() {
 
   network = new vis.Network(container, data, options);
   setupModalEvents();
+
+  setupNodeHoverImage(projects); // <-- Add this here, after network is created
+
+  //setupEdgeHoverEvents();
+
+  let currentlyHoveredEdge = null;
+
+  function setupEdgeHoverEvents() {
+    network.on("hoverEdge", function (params) {
+      const edgeId = params.edge;
+      const edge = edges.get(edgeId);
+
+      if (edge && edge.hiddenTag) {
+        currentlyHoveredEdge = edgeId;
+        edges.update({ id: edgeId, label: edge.hiddenTag });
+      }
+    });
+
+    network.on("blurEdge", function (params) {
+      clearHoveredEdge();
+    });
+
+    network.on("hoverNode", function () {
+      clearHoveredEdge();
+    });
+
+    network.on("blurNode", function () {
+      clearHoveredEdge();
+    });
+
+    network.on("click", function () {
+      clearHoveredEdge();
+    });
+  }
+
+  function clearHoveredEdge() {
+    if (currentlyHoveredEdge !== null) {
+      edges.update({ id: currentlyHoveredEdge, label: '' });
+      currentlyHoveredEdge = null;
+    }
+  }
 
   network.once("stabilizationIterationsDone", function () {
     console.log("Network stabilized");
@@ -136,29 +213,366 @@ function buildGraph() {
 function setupBackgroundSync() {
   // Runs on zoom and drag events
   network.on("dragging", sendBackgroundUpdate);
-  network.on("zoom", sendBackgroundUpdate);
+  
+  network.on("zoom", function (params) {
+  // params.pointer.DOM contains the mouse position relative to the container
+  if (params && params.pointer && params.pointer.DOM) {
+    const pointer = network.DOMtoCanvas(params.pointer.DOM);
+    sendBackgroundUpdate(pointer);
+  } else {
+    sendBackgroundUpdate();
+  }
+  });
 
   // Send initial state to background
   sendBackgroundUpdate();
 }
 
-function sendBackgroundUpdate() {
+function sendBackgroundUpdate(center) {
   const position = network.getViewPosition(); // {x, y}
   const scale = network.getScale(); // zoom level
 
-  updateBackgroundTarget({ x: -position.x, y: -position.y }, scale);
+  updateBackgroundTarget({ x: -position.x, y: -position.y }, scale, center);
 }
 
 // ==============================
 // Filtering Logic (unchanged)
 // ==============================
 
-function setupFilters() { /* ... unchanged ... */ }
-function filterGraph() { /* ... unchanged ... */ }
+function setupFilters() {
+  ["materialSelect", "yearSelect", "categorySelect"].forEach((id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener("change", filterGraph);
+    }
+  });
+}
+
+function groupMatchingNodes(nodeIds) {
+  const basePosition = { x: 0, y: 0 }; // Center point for the group
+  const spacing = 150; // Space between nodes in the group
+
+  let angleStep = (2 * Math.PI) / nodeIds.length;
+  const newPositions = {};
+
+  nodeIds.forEach((nodeId, index) => {
+    const angle = index * angleStep;
+    newPositions[nodeId] = {
+      x: basePosition.x + Math.cos(angle) * spacing,
+      y: basePosition.y + Math.sin(angle) * spacing
+    };
+  });
+
+  // Temporarily disable physics to lock the positions
+  network.setOptions({ physics: { enabled: false } });
+  network.moveNodes(newPositions);
+}
+
+
+function filterGraph() {
+  const materialEl = document.getElementById("materialSelect");
+  const yearEl = document.getElementById("yearSelect");
+  const categoryEl = document.getElementById("categorySelect");
+
+  const material = materialEl ? materialEl.value : "";
+  const year = yearEl ? yearEl.value : "";
+  const category = categoryEl ? categoryEl.value : "";
+
+  let firstMatchedNode = null;
+  const nodesToUpdate = [];
+  const matchedNodeIds = [];
+
+  nodes.forEach((node) => {
+    const project = projects.find((p) => p.id === node.id);
+    if (!project) return;
+
+    const tags = project.tags.map((t) => t.toLowerCase());
+
+    const matchesMaterial = !material || tags.includes(material);
+    const matchesYear = !year || tags.includes(year);
+    const matchesCategory = !category || tags.includes(category);
+
+    const match = matchesMaterial && matchesYear && matchesCategory;
+
+    if (match && !firstMatchedNode) {
+      firstMatchedNode = node.id;
+    }
+
+    if (match) matchedNodeIds.push(node.id);
+
+    nodesToUpdate.push({
+      id: node.id,
+      value: match ? 25 : 15,
+      color: match
+        ? {
+            background: "#89ffb8",
+            border: "#ffffff",
+            highlight: { background: "#ffffff", border: "#89ffb8" }
+          }
+        : {
+            background: "#1f1f1f",
+            border: "#666666",
+            highlight: { background: "#333333", border: "#aaaaaa" }
+          }
+    });
+  });
+
+  nodes.update(nodesToUpdate);
+
+  if (matchedNodeIds.length > 0) {
+    groupedMatchingNodes(matchedNodeIds);
+  }
+
+  if (firstMatchedNode) {
+    setTimeout(() => {
+      network.focus(firstMatchedNode, {
+        scale: 1.2,
+        animation: { duration: 800, easingFunction: "easeInOutQuad" }
+      });
+    }, 100);
+  }
+}
+
 
 // ==============================
 // Modal Setup (unchanged)
 // ==============================
 
-function setupModalEvents() { /* ... unchanged ... */ }
-function closeModalHandler() { /* ... unchanged ... */ }
+function setupModalEvents() {
+  network.on("click", function (params) {
+    if (params.nodes.length > 0) {
+      const nodeId = params.nodes[0];
+      const project = projects.find((p) => p.id === nodeId);
+      if (!project) return;
+
+      const nodesToUpdate = [];
+
+      nodes.forEach((node) => {
+        nodesToUpdate.push({
+          id: node.id,
+          value: node.id === nodeId ? 30 : 15,
+          color: node.id === nodeId
+            ? {
+                background: "#ffffff",
+                border: "#89ffb8",
+                highlight: { background: "#ffffff", border: "#89ffb8" }
+              }
+            : {
+                background: "#1f1f1f",
+                border: "#666666",
+                highlight: { background: "#333333", border: "#aaaaaa" }
+              },
+          font: node.id === nodeId
+            ? { color: "#ffffff", size: 16, bold: true }
+            : { color: "#ffffff", size: 14, bold: false }
+        });
+      });
+
+      nodes.update(nodesToUpdate);
+
+      const bubble = document.getElementById("modal-bubble");
+      const modal = document.getElementById("modal");
+      const modalContent = document.getElementById("modal-content");
+      const iframe = document.getElementById("project-frame");
+
+      if (iframe) {
+        iframe.src = "";
+        iframe.style.display = "none";
+      }
+
+      if (modalContent) {
+        modalContent.innerHTML = "";
+
+        const titleElement = document.createElement("h2");
+        titleElement.textContent = project.title;
+        titleElement.style.color = "#ffffff";
+        titleElement.style.marginBottom = "10px";
+
+        const descElement = document.createElement("p");
+        descElement.textContent = project.description || "No description provided.";
+        descElement.style.color = "#cccccc";
+        descElement.style.lineHeight = "1.5";
+
+        modalContent.appendChild(titleElement);
+        modalContent.appendChild(descElement);
+
+        if (project.images && project.images.length > 0) {
+          const imagesContainer = document.createElement("div");
+          imagesContainer.style.display = "flex";
+          imagesContainer.style.flexDirection = "column";
+          imagesContainer.style.gap = "10px";
+          imagesContainer.style.marginTop = "15px";
+
+          project.images.forEach((imgUrl) => {
+            const imgElement = document.createElement("img");
+            imgElement.src = imgUrl;
+            imgElement.style.maxWidth = "100%";
+            imgElement.style.borderRadius = "5px";
+            imagesContainer.appendChild(imgElement);
+          });
+
+          modalContent.appendChild(imagesContainer);
+        }
+      }
+
+      if (bubble && modal) {
+        modal.style.display = "flex";
+
+        setTimeout(() => {
+          bubble.classList.add("expanded");
+        }, 50);
+      }
+    }
+  });
+
+  const closeModal = document.getElementById("close-modal");
+  if (closeModal) {
+    closeModal.addEventListener("click", closeModalHandler);
+  }
+}
+
+
+function closeModalHandler() {
+  const bubble = document.getElementById("modal-bubble");
+  const iframe = document.getElementById("project-frame");
+  const modalContent = document.getElementById("modal-content");
+  const modal = document.getElementById("modal");
+
+  if (bubble) {
+    bubble.classList.remove("expanded");
+  }
+
+  setTimeout(() => {
+    if (modal) modal.style.display = "none";
+    if (iframe) iframe.src = "";
+    if (modalContent) modalContent.innerHTML = "";
+  }, 300);
+}
+
+// ==============================
+// Node Hover Image Setup (NEW)
+// ==============================
+
+function setupNodeHoverImage(projects) {
+  network.on("hoverNode", function(params) {
+    const nodeId = params.node;
+    const project = projects.find(p => p.id === nodeId);
+    if (project && project.images && project.images.length > 0) {
+      const img = document.getElementById('background-image');
+      img.src = project.images[0];
+      img.style.opacity = 0.3;
+      img.style.display = "block"; // <-- Show the image
+    }
+  });
+
+  network.on("blurNode", function() {
+    const img = document.getElementById('background-image');
+    img.src = "";
+    img.style.opacity = 0;
+    img.style.display = "none"; // <-- Hide the image
+  });
+}
+
+// ==============================
+// Halftone Canvas Setup (NEW)
+// ==============================
+
+const halftoneCanvas = document.getElementById("halftone-canvas");
+const ctx = halftoneCanvas.getContext("2d");
+
+function resizeHalftoneCanvas() {
+  halftoneCanvas.width = window.innerWidth;
+  halftoneCanvas.height = window.innerHeight;
+}
+
+function drawHalftone(x, y, radius) {
+  const imageData = ctx.createImageData(radius * 2, radius * 2);
+  const data = imageData.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const angle = Math.random() * Math.PI * 2;
+    const r = Math.sqrt(Math.random()) * radius;
+    const px = Math.cos(angle) * r + radius;
+    const py = Math.sin(angle) * r + radius;
+
+    const index = (py * imageData.width + px) * 4;
+    if (index < data.length) {
+      data[index] = 255;     // R
+      data[index + 1] = 255; // G
+      data[index + 2] = 255; // B
+      data[index + 3] = 255; // A
+    }
+  }
+
+  ctx.putImageData(imageData, x - radius, y - radius);
+}
+
+function clearHalftone() {
+  ctx.clearRect(0, 0, halftoneCanvas.width, halftoneCanvas.height);
+}
+
+// Initial setup
+resizeHalftoneCanvas();
+window.addEventListener("resize", resizeHalftoneCanvas);
+
+// ==============================
+// Background Animation (NEW)
+// ==============================
+
+let animationFrameId;
+const particles = [];
+const numParticles = 100;
+
+function Particle(x, y) {
+  this.x = x;
+  this.y = y;
+  this.size = Math.random() * 2 + 1;
+  this.speedX = Math.random() * 3 - 1.5;
+  this.speedY = Math.random() * 3 - 1.5;
+}
+
+function initParticles() {
+  for (let i = 0; i < numParticles; i++) {
+    const x = Math.random() * window.innerWidth;
+    const y = Math.random() * window.innerHeight;
+    particles.push(new Particle(x, y));
+  }
+}
+
+function updateParticles() {
+  particles.forEach((particle) => {
+    particle.x += particle.speedX;
+    particle.y += particle.speedY;
+
+    if (particle.x <= 0 || particle.x >= window.innerWidth) {
+      particle.speedX *= -1;
+    }
+    if (particle.y <= 0 || particle.y >= window.innerHeight) {
+      particle.speedY *= -1;
+    }
+  });
+}
+
+function drawParticles() {
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  particles.forEach((particle) => {
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.fill();
+  });
+}
+
+function animate() {
+  updateParticles();
+  drawParticles();
+  animationFrameId = requestAnimationFrame(animate);
+}
+
+// ==============================
+// Start Animation and Particle System
+// ==============================
+
+initParticles();
+animate();
+

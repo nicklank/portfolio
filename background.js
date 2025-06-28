@@ -36,7 +36,8 @@ function updateCursorPosition(e) {
     mouseY = e.clientY;
 }
 
-export function updateBackgroundTarget(position, newScale) {
+export function updateBackgroundTarget(position, newScale, center) {
+    // Always use the position and scale from vis.js, ignore center
     targetX = position.x;
     targetY = position.y;
     targetScale = newScale;

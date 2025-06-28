@@ -5,7 +5,7 @@
         "tags": ["softgood", "2025", "fashion", "activism", "cloth", "product"],
         "description": "A Project about sustainable softgoods and activism.",
         "images": [
-            "image1.jpg",
+            "img/activest/hopefront.png",
             "image2.jpg"
         ]
     },
@@ -30,6 +30,44 @@
             "installation",
             "metal",
             "product"
+        ],
+        "url": "#"
+    },
+    {
+        "id": "the-collaborator",
+        "title": "The Collaborator",
+        "tags": [
+            "digital",
+            "2024",
+            "physical",
+            "code",
+            "plastic",
+            "product",
+            "music",
+            "music"
+        ],
+        "url": "#"
+    },
+    {
+        "id": "net-zero-2050",
+        "title": "Net Zero: 2050",
+        "tags": [
+            "digital",
+            "2024",
+            "code"
+        ],
+        "url": "#"
+    },
+    {
+        "id": "arbori-chair",
+        "title": "Arbori Chair",
+        "tags": [
+            "physical",
+            "2023",
+            "furniture",
+            "product",
+            "wood",
+            "cloth"
         ],
         "url": "#"
     }
