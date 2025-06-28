@@ -1,145 +1,471 @@
 /* General Page Styling */
 body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Helvetica Neue', sans-serif;
-  background-color: #0e0e0e;
-  color: #e0e0e0;
-  height: 100vh;
-  overflow: hidden;
+    margin: 0;
+    padding: 0;
+    font-family: 'Helvetica Neue', sans-serif;
+    background-color: #0e0e0e;
+    color: #e0e0e0;
+    height: 100vh;
+    overflow: hidden; /* Prevents scrollbar when elements animate/grow */
 }
 
 body.light-mode {
-  background-color: #f7f2e3; /* Light cream */
-  color: #222;
+    background-color: #f7f2e3; /* Light cream */
+    color: #222;
 }
 
+/* Background Grain Effect */
 body::before {
-  content: "";
-  position: fixed;
-  top: 0; left: 0;
-  width: 200%; /* Make it larger so we can move it without showing empty areas */
-  height: 200%;
-  pointer-events: none;
-  opacity: 0.2;
-  z-index: 1;
-  animation: drift 60s linear infinite;
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200%; /* Make it larger so we can move it without showing empty areas */
+    height: 200%;
+    pointer-events: none;
+    opacity: 0.2;
+    z-index: 1; /* Below network and UI */
+    animation: drift 60s linear infinite;
+    /* You'll need to define 'drift' keyframes in your JS or a separate CSS file */
+    /* Example:
+    @keyframes drift {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(-50%, -50%); }
+    }
+    */
+    /* Add a background-image for the grain effect, e.g., a subtle noise pattern */
+    /* background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='); */
+    /* You'd replace the above with a proper subtle noise image or SVG pattern */
+    /* For a quick test, you can use: background: radial-gradient(circle at center, rgba(0,0,0,0.1) 0%, transparent 70%); */
 }
 
+/* Network Graph Container */
 #network {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 2; /* Make sure your network sits above both grain and grid layers */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2; /* Make sure your network sits above both grain and grid layers */
 }
 
+/* =========================================
+   Dropdown Title (e.g., "FILTERS") - The animated text
+   ========================================= */
+.dropdown-title-wrapper { /* A new wrapper for positioning the title */
+    position: absolute;
+    top: 20px; /* Adjust as needed for vertical positioning */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10; /* Make sure it's above the network and background */
+    display: inline-block; /* To contain the title text */
+}
+
+.dropdown-title {
+    font-family: 'Arial Black', Impact, sans-serif; /* Brutalist sans-serif */
+    font-size: 4em; /* Pretty big initial size */
+    font-weight: 900; /* Extra bold */
+    color: #d0d0d0; /* Initial light color */
+    cursor: pointer;
+    padding: 10px 0; /* Some padding for visual comfort */
+    display: inline-block; /* Essential for text transformations */
+    white-space: nowrap; /* Prevent text from wrapping */
+    position: relative; /* For the individual letter spans */
+    transition: color 0.3s ease-out; /* Smooth color transition for the whole title */
+}
+
+/* Individual letter animation for the "bezier-like" growth */
+.dropdown-title span {
+    display: inline-block; /* Allows individual transformation */
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55), /* Custom bezier for bouncy/organic feel */
+                color 0.3s ease-out,
+                text-shadow 0.3s ease-out,
+                filter 0.3s ease-out; /* Also transition color, shadow, and filter */
+    transform-origin: left center; /* Make them grow from the left */
+    position: relative; /* For pseudo-elements if you use them for glitch */
+}
+
+/* Hover state for the entire dropdown title */
+.dropdown-title:hover {
+    color: #ffffff; /* Lighter color on hover */
+}
+
+/* Hover state for individual letters within the title */
+.dropdown-title:hover span {
+    transform: scale(1.15); /* Make letters bigger on hover */
+    color: #ffffff; /* Ensure individual letters also lighten */
+
+    /* Glitch/Analog Vibes */
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.7), /* Subtle glow */
+                 0 0 10px rgba(0, 255, 255, 0.3); /* Cyan secondary glow */
+    filter: blur(0.2px); /* Very subtle blur for "flicker" */
+    animation: jitter 0.1s infinite alternate; /* Fast, subtle jitter */
+}
+
+/* Define the jitter animation */
+@keyframes jitter {
+    0% { transform: translate(0, 0) scale(1.15); } /* Maintain scaled size */
+    25% { transform: translate(0.5px, -0.5px) scale(1.15); }
+    50% { transform: translate(-0.5px, 0.5px) scale(1.15); }
+    75% { transform: translate(0.5px, 0.5px) scale(1.15); }
+    100% { transform: translate(0, 0) scale(1.15); }
+}
+
+/* Delaying the animation for a "left-to-right" effect */
+/* This part is best handled by JavaScript for dynamic text */
+.dropdown-title:hover span:nth-child(1) { transition-delay: 0s; animation-delay: 0s; }
+.dropdown-title:hover span:nth-child(2) { transition-delay: 0.03s; animation-delay: 0.03s; }
+.dropdown-title:hover span:nth-child(3) { transition-delay: 0.06s; animation-delay: 0.06s; }
+.dropdown-title:hover span:nth-child(4) { transition-delay: 0.09s; animation-delay: 0.09s; }
+.dropdown-title:hover span:nth-child(5) { transition-delay: 0.12s; animation-delay: 0.12s; }
+.dropdown-title:hover span:nth-child(6) { transition-delay: 0.15s; animation-delay: 0.15s; }
+.dropdown-title:hover span:nth-child(7) { transition-delay: 0.18s; animation-delay: 0.18s; }
+.dropdown-title:hover span:nth-child(8) { transition-delay: 0.21s; animation-delay: 0.21s; }
+/* Add more :nth-child rules as needed for longer titles, or use JS */
+
+/* =========================================
+   Filter Dropdowns - Custom Brutalist Redesign
+   ========================================= */
 #filters {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 10;
-  display: flex;
-  gap: 10px;
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 40px; /* Increased gap for breathing room */
+    z-index: 10;
 }
 
-#filters select {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: none;
-  font-size: 14px;
-  background-color: #1e1e1e;
-  color: #ffffff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-  appearance: none;
+.dropdown {
+    position: relative;
+    display: inline-block;
 }
 
-
-/* Graph container */
-#network {
-  width: 100%;
-  height: 100vh;
+/* Style the original select element as a clickable button */
+.dropdown select {
+    /* Bold brutalist typography */
+    font-family: 'Arial Black', 'Helvetica Neue', Impact, sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    
+    /* Styling */
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    cursor: pointer;
+    appearance: none; /* Hide default select styling */
+    
+    /* Subtle underline instead of bubble */
+    border-bottom: 3px solid transparent;
+    
+    /* Dark mode colors */
+    color: #666;
+    
+    /* Smooth transitions */
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+/* Custom dropdown button (for when we replace select with custom elements) */
+.dropdown-button {
+    /* Bold brutalist typography */
+    font-family: 'Arial Black', 'Helvetica Neue', Impact, sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    
+    /* Styling */
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    cursor: pointer;
+    
+    /* Subtle underline instead of bubble */
+    border-bottom: 3px solid transparent;
+    
+    /* Dark mode colors */
+    color: #666;
+    
+    /* Smooth transitions */
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Hover & Focus states for both select and button */
+.dropdown select:hover,
+.dropdown-button:hover {
+    color: #89ffb8;
+    border-bottom: 3px solid #89ffb8;
+    transform: translateY(-2px);
+}
+
+.dropdown select:focus,
+.dropdown-button:focus {
+    outline: none;
+    color: #ffffff;
+    border-bottom: 3px solid #ffffff;
+    transform: translateY(-2px);
+}
+
+/* Light mode styling for both */
+body.light-mode .dropdown select,
+body.light-mode .dropdown-button {
+    color: #999;
+}
+
+body.light-mode .dropdown select:hover,
+body.light-mode .dropdown-button:hover {
+    color: #439966;
+    border-bottom: 3px solid #439966;
+}
+
+body.light-mode .dropdown select:focus,
+body.light-mode .dropdown-button:focus {
+    color: #222;
+    border-bottom: 3px solid #222;
+}
+
+/* Custom Dropdown Arrow */
+.dropdown::after {
+    content: '▼';
+    position: absolute;
+    top: 50%;
+    right: -20px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    
+    font-family: 'Arial Black', sans-serif;
+    font-size: 12px;
+    font-weight: 900;
+    color: #444;
+    
+    transition: all 0.3s ease;
+}
+
+.dropdown:hover::after {
+    color: #89ffb8;
+    transform: translateY(-50%) translateX(3px);
+}
+
+body.light-mode .dropdown::after {
+    color: #bbb;
+}
+
+body.light-mode .dropdown:hover::after {
+    color: #439966;
+}
+
+/* Custom dropdown menu container */
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+/* Individual dropdown option styling */
+.dropdown-option {
+    display: block;
+    font-family: 'Arial Black', 'Helvetica Neue', Impact, sans-serif;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    
+    padding: 12px 0;
+    margin: 8px 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    
+    /* Start position for animation */
+    transform: translateX(-50px);
+    opacity: 0;
+    
+    /* Smooth gliding animation */
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    
+    /* Dark mode colors */
+    color: #555;
+}
+
+/* Animated in state */
+.dropdown-option.animate-in {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* Hover states for options */
+.dropdown-option:hover {
+    color: #89ffb8;
+    transform: translateX(5px);
+}
+
+.dropdown-option:focus {
+    outline: none;
+    color: #ffffff;
+    transform: translateX(5px);
+}
+
+/* Light mode styling for options */
+body.light-mode .dropdown-option {
+    color: #777;
+}
+
+body.light-mode .dropdown-option:hover {
+    color: #439966;
+}
+
+body.light-mode .dropdown-option:focus {
+    color: #222;
+}
+
+/* Staggered animation delays for cascade effect */
+.dropdown-option:nth-child(1) { transition-delay: 0s; }
+.dropdown-option:nth-child(2) { transition-delay: 0.05s; }
+.dropdown-option:nth-child(3) { transition-delay: 0.1s; }
+.dropdown-option:nth-child(4) { transition-delay: 0.15s; }
+.dropdown-option:nth-child(5) { transition-delay: 0.2s; }
+.dropdown-option:nth-child(6) { transition-delay: 0.25s; }
+.dropdown-option:nth-child(7) { transition-delay: 0.3s; }
+.dropdown-option:nth-child(8) { transition-delay: 0.35s; }
+.dropdown-option:nth-child(9) { transition-delay: 0.4s; }
+.dropdown-option:nth-child(10) { transition-delay: 0.45s; }
+
+/* =========================================
+   Modal Styling
+   ========================================= */
 /* Modal overlay - No backdrop blur */
 #modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  z-index: 100;
-  justify-content: center;
-  align-items: center;
+    display: none; /* Will be toggled by JS */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent; /* No background, only the bubble is visible */
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Simplified Glass Modal Bubble */
 #modal-bubble {
-  position: absolute;
-  border-radius: 0%;
-  width: 0px;
-  height: 0px;
-  
-  /* Simple glass effect with gaussian blur */
-  background: rgba(255,255,255,0.0);
-  border: 1px solid rgba(255,255,255,0.05);
-  backdrop-filter: blur(10px);
-  
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  opacity: 0;
+    position: absolute; /* Allows for precise placement and expansion */
+    border-radius: 0%; /* Starts sharp */
+    width: 0px;
+    height: 0px;
+
+    /* Simple glass effect with gaussian blur */
+    background: rgba(255,255,255,0.0); /* Fully transparent background initially */
+    border: 1px solid rgba(255,255,255,0.05); /* Very subtle border initially */
+    backdrop-filter: blur(0px); /* Start with no blur */
+    -webkit-backdrop-filter: blur(0px); /* For Safari compatibility */
+
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); /* Smooth, slightly bouncy transition */
+    overflow: hidden; /* Hide content during expansion */
+    display: flex;
+    flex-direction: column;
+    opacity: 0; /* Start invisible */
 }
 
 /* Expanded state */
 #modal-bubble.expanded {
-  width: 80vw;
-  height: 80vh;
-  border-radius: 0; /* Sharp 90-degree corners as in your original */
-  opacity: 1;
-  border: 1px solid rgba(255,255,255,0.1);
-  
-  background: rgba(255,255,255,0.0);
-  backdrop-filter: blur(10px);
+    width: 80vw;
+    height: 80vh;
+    border-radius: 0; /* Sharp 90-degree corners */
+    opacity: 1; /* Fully visible */
+    border: 1px solid rgba(255,255,255,0.2); /* More visible border */
+
+    background: rgba(255,255,255,0.01); /* Slightly visible background when expanded */
+    backdrop-filter: blur(30px); /* Apply blur when expanded */
+    -webkit-backdrop-filter: blur(30px); /* For Safari compatibility */
 }
 
 /* Iframe content inside bubble */
 #project-frame {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  border: none;
-  position: relative;
-  z-index: 2;
+    flex: 1; /* Takes up available space */
+    width: 100%;
+    height: 100%;
+    border: none;
+    position: relative;
+    z-index: 2; /* Above the bubble background but below close button */
+    background-color: transparent; /* Ensure iframe background is transparent if content allows */
 }
 
 /* Close button with glass effect */
 #close-modal {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
-  font-size: 18px;
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 50%;
-  color: #fff;
-  z-index: 101;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* For Safari compatibility */
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    color: #fff;
+    z-index: 101; /* Above modal bubble and iframe */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
 }
 
 /* X button in top right*/
 #close-modal:hover {
-  background: rgba(255,255,255,0.2);
-  transform: scale(1.1);
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.1);
+}
+
+/* =========================================
+   Media Queries
+   ========================================= */
+@media (max-width: 768px) {
+    .dropdown-title {
+        font-size: 2.5em; /* Smaller size for smaller screens */
+    }
+
+    #filters {
+        flex-direction: column; /* Stack dropdowns vertically */
+        gap: 20px;
+        top: 80px; /* Adjust position for smaller screens */
+        align-items: center;
+    }
+
+    .dropdown select,
+    .dropdown-button {
+        font-size: 16px;
+    }
+    
+    .dropdown::after {
+        right: -15px;
+        font-size: 10px;
+    }
+    
+    .dropdown-option {
+        font-size: 14px;
+    }
+
+    #modal-bubble.expanded {
+        width: 95vw; /* Make modal larger on smaller screens */
+        height: 90vh;
+    }
 }

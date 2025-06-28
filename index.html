@@ -18,33 +18,46 @@
   <!-- <canvas id="halftone-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;display:none;"></canvas>
 -->
 
-<div id="filters">
-  <select id="materialSelect">
-    <option value="">Material</option>
-    <option value="wood">Wood</option>
-    <option value="metal">Metal</option>
-    <option value="cloth">Cloth</option>
-    <option value="plastic">Plastic</option>
-  </select>
+    <div class="dropdown-title-wrapper">
+        <div class="dropdown-title" id="filtersTitle">
+        </div>
+    </div>
 
-  <select id="yearSelect">
-    <option value="">Year</option>
-    <option value="2023">2023</option>
-    <option value="2024">2024</option>
-    <option value="2025">2025</option>
-  </select>
+    <div id="filters">
+        <div class="dropdown" data-dropdown="material">
+            <button class="dropdown-button">Material</button>
+            <div class="dropdown-menu">
+                <button class="dropdown-option" data-value="">All Materials</button>
+                <button class="dropdown-option" data-value="wood">Wood</button>
+                <button class="dropdown-option" data-value="metal">Metal</button>
+                <button class="dropdown-option" data-value="cloth">Cloth</button>
+                <button class="dropdown-option" data-value="plastic">Plastic</button>
+            </div>
+        </div>
 
-  <select id="categorySelect">
-    <option value="">Category</option>
-    <option value="graphic design">Graphic Design</option>
-    <option value="video">Video</option>
-    <option value="music">Music</option>
-    <option value="product">Product</option>
-  </select>
-</div>
+        <div class="dropdown" data-dropdown="year">
+            <button class="dropdown-button">Year</button>
+            <div class="dropdown-menu">
+                <button class="dropdown-option" data-value="">All Years</button>
+                <button class="dropdown-option" data-value="2023">2023</button>
+                <button class="dropdown-option" data-value="2024">2024</button>
+                <button class="dropdown-option" data-value="2025">2025</button>
+            </div>
+        </div>
 
-  <div id="network"></div>
+        <div class="dropdown" data-dropdown="category">
+            <button class="dropdown-button">Category</button>
+            <div class="dropdown-menu">
+                <button class="dropdown-option" data-value="">All Categories</button>
+                <button class="dropdown-option" data-value="graphic design">Graphic Design</button>
+                <button class="dropdown-option" data-value="video">Video</button>
+                <button class="dropdown-option" data-value="music">Music</button>
+                <button class="dropdown-option" data-value="product">Product</button>
+            </div>
+        </div>
+    </div>
 
+    <div id="network"></div>
 
 <div id="modal">
   <div id="modal-bubble">
@@ -61,7 +74,109 @@
   </label>
 </div>
 
+<script>
+// Custom Dropdown Animation JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Store current filter values
+    const currentFilters = {
+        material: '',
+        year: '',
+        category: ''
+    };
+
+    // Handle dropdown interactions
+    document.querySelectorAll('.dropdown').forEach(dropdown => {
+        const button = dropdown.querySelector('.dropdown-button');
+        const menu = dropdown.querySelector('.dropdown-menu');
+        const options = menu.querySelectorAll('.dropdown-option');
+        const dropdownType = dropdown.getAttribute('data-dropdown');
+
+        // Toggle dropdown on button click
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // Close other dropdowns
+            document.querySelectorAll('.dropdown-menu.active').forEach(otherMenu => {
+                if (otherMenu !== menu) {
+                    otherMenu.classList.remove('active');
+                    otherMenu.querySelectorAll('.dropdown-option').forEach(opt => 
+                        opt.classList.remove('animate-in')
+                    );
+                }
+            });
+
+            // Toggle current dropdown
+            const isActive = menu.classList.contains('active');
+            
+            if (!isActive) {
+                // Show menu
+                menu.classList.add('active');
+                
+                // Animate options in with staggered timing
+                options.forEach((option, index) => {
+                    setTimeout(() => {
+                        option.classList.add('animate-in');
+                    }, index * 50); // 50ms delay between each option
+                });
+            } else {
+                // Hide menu
+                menu.classList.remove('active');
+                options.forEach(option => option.classList.remove('animate-in'));
+            }
+        });
+
+        // Handle option selection
+        options.forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                const value = this.getAttribute('data-value');
+                const text = this.textContent;
+                
+                // Update button text and store filter value
+                if (value === '') {
+                    button.textContent = dropdownType.charAt(0).toUpperCase() + dropdownType.slice(1);
+                } else {
+                    button.textContent = text;
+                }
+                
+                currentFilters[dropdownType] = value;
+                
+                // Close dropdown
+                menu.classList.remove('active');
+                options.forEach(opt => opt.classList.remove('animate-in'));
+                
+                // Trigger your existing filter function
+                if (typeof applyFilters === 'function') {
+                    applyFilters(currentFilters);
+                }
+                
+                // Dispatch custom event for compatibility with existing code
+                const event = new CustomEvent('filterChange', {
+                    detail: { type: dropdownType, value: value, allFilters: currentFilters }
+                });
+                document.dispatchEvent(event);
+            });
+        });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
+            menu.classList.remove('active');
+            menu.querySelectorAll('.dropdown-option').forEach(option => 
+                option.classList.remove('animate-in')
+            );
+        });
+    });
+
+    // Expose current filters globally for compatibility
+    window.getCurrentFilters = () => currentFilters;
+});
+</script>
+
   <script type="module" src="background.js"></script>
+  <script type="module" src="halftone.js"></script>
   <script type="module" src="scripts.js"></script>
 </body>
 </html>

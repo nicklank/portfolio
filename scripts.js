@@ -50,8 +50,13 @@ function buildGraph() {
           border: "#ffffff"
         }
       },
-      font: { color: "#ffffff", size: 14 },
-      value: 15
+      font: { 
+        color: document.body.classList.contains('light-mode') ? "#000000" : "#ffffff", 
+        size: 16,
+        face: "'Arial Black', sans-serif",
+        bold: true
+      },
+      value: 18
     });
 
     // Build tag map for edges
@@ -61,9 +66,6 @@ function buildGraph() {
     });
   });
 
-
-
-  
   // Build edges with shared tag weighting
   for (let tag in tagMap) {
     const related = tagMap[tag];
@@ -98,13 +100,12 @@ function buildGraph() {
           },
           smooth: {
             type: "cubicBezier",
-            roundness: Math.random() * 0.5 + 0.1 
+            roundness: Math.random() * 0.05 + 0.01 
           }
         });
       }
     }
   }
-
 
   const data = { nodes, edges };
 
@@ -132,7 +133,6 @@ function buildGraph() {
     },
     interaction: {
       hover: true,
-      hoverEdges: true,
       dragNodes: true,
       dragView: true,
       zoomView: true,
@@ -162,7 +162,36 @@ function buildGraph() {
 
   setupNodeHoverImage(projects); // <-- Add this here, after network is created
 
+  
+  function addSubtleMovement() {
+    if (!network) return;
+  
+    // Add tiny random velocities to all nodes every few seconds
+    const nodeIds = nodes.getIds();
+    nodeIds.forEach(nodeId => {
+      const randomVelocity = {
+        x: (Math.random() - 0.5) * 3, // Very small random velocity
+        y: (Math.random() - 0.5) * 3
+      };
+    
+      // Apply the tiny velocity
+      network.moveNode(nodeId, 
+        network.getPositions([nodeId])[nodeId].x + randomVelocity.x,
+        network.getPositions([nodeId])[nodeId].y + randomVelocity.y
+      );
+    });
+  }
+
+  // Start the subtle movement loop
+  function startSubtleMovement() {
+    setInterval(addSubtleMovement, 3000); // Every 3 seconds
+  }
+
+
+
   //setupEdgeHoverEvents();
+
+
 
   let currentlyHoveredEdge = null;
 
@@ -204,6 +233,12 @@ function buildGraph() {
   network.once("stabilizationIterationsDone", function () {
     console.log("Network stabilized");
   });
+
+  startSubtleMovement(); // Start the subtle movement loop
+  // Re-setup light mode toggle after network rebuild
+  document.getElementById('toggle-lightmode').removeEventListener('change', lightModeHandler);
+  document.getElementById('toggle-lightmode').addEventListener('change', lightModeHandler);
+
 }
 
 // ==============================
@@ -236,16 +271,72 @@ function sendBackgroundUpdate(center) {
 }
 
 // ==============================
-// Filtering Logic (unchanged)
+// UPDATED Filtering Logic for New Dropdowns
 // ==============================
 
 function setupFilters() {
-  ["materialSelect", "yearSelect", "categorySelect"].forEach((id) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.addEventListener("change", filterGraph);
-    }
+  // Set up dropdown functionality
+  document.querySelectorAll('.dropdown').forEach(dropdown => {
+    const button = dropdown.querySelector('.dropdown-button');
+    const menu = dropdown.querySelector('.dropdown-menu');
+    const options = dropdown.querySelectorAll('.dropdown-option');
+    const dropdownType = dropdown.getAttribute('data-dropdown');
+    
+    // Toggle dropdown menu
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      
+      // Close other dropdowns
+      document.querySelectorAll('.dropdown').forEach(otherDropdown => {
+        if (otherDropdown !== dropdown) {
+          otherDropdown.querySelector('.dropdown-menu').classList.remove('show');
+        }
+      });
+      
+      menu.classList.toggle('show');
+    });
+    
+    // Handle option selection
+    options.forEach(option => {
+      option.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        const value = option.getAttribute('data-value');
+        const text = option.textContent;
+        
+        // Update button text
+        button.textContent = text;
+        
+        // Store selected value on the dropdown element
+        dropdown.setAttribute('data-selected', value);
+        
+        // Close menu
+        menu.classList.remove('show');
+        
+        // Trigger filter update
+        filterGraph();
+      });
+    });
   });
+  
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+      menu.classList.remove('show');
+    });
+  });
+}
+
+function getFilterValues() {
+  const materialDropdown = document.querySelector('[data-dropdown="material"]');
+  const yearDropdown = document.querySelector('[data-dropdown="year"]');
+  const categoryDropdown = document.querySelector('[data-dropdown="category"]');
+  
+  return {
+    material: materialDropdown ? materialDropdown.getAttribute('data-selected') || '' : '',
+    year: yearDropdown ? yearDropdown.getAttribute('data-selected') || '' : '',
+    category: categoryDropdown ? categoryDropdown.getAttribute('data-selected') || '' : ''
+  };
 }
 
 function groupMatchingNodes(nodeIds) {
@@ -253,30 +344,33 @@ function groupMatchingNodes(nodeIds) {
   const spacing = 150; // Space between nodes in the group
 
   let angleStep = (2 * Math.PI) / nodeIds.length;
-  const newPositions = {};
+  const newPositions = [];
 
   nodeIds.forEach((nodeId, index) => {
     const angle = index * angleStep;
-    newPositions[nodeId] = {
+    newPositions.push({
+      id: nodeId,
       x: basePosition.x + Math.cos(angle) * spacing,
-      y: basePosition.y + Math.sin(angle) * spacing
-    };
+      y: basePosition.y + Math.sin(angle) * spacing,
+      physics: false // This tells vis.js to animate to this position
+    });
   });
 
-  // Temporarily disable physics to lock the positions
-  network.setOptions({ physics: { enabled: false } });
-  network.moveNodes(newPositions);
+  // Update positions without disabling global physics
+  nodes.update(newPositions);
+  
+  // After a delay, allow physics to take over again for these nodes
+  setTimeout(() => {
+    const resetPhysics = nodeIds.map(id => ({ id, physics: true }));
+    nodes.update(resetPhysics);
+  }, 1000); // Give time for smooth movement
 }
 
-
 function filterGraph() {
-  const materialEl = document.getElementById("materialSelect");
-  const yearEl = document.getElementById("yearSelect");
-  const categoryEl = document.getElementById("categorySelect");
+  const { material, year, category } = getFilterValues();
 
-  const material = materialEl ? materialEl.value : "";
-  const year = yearEl ? yearEl.value : "";
-  const category = categoryEl ? categoryEl.value : "";
+  // Clear any existing filter edges
+  filterEdges.clear();
 
   let firstMatchedNode = null;
   const nodesToUpdate = [];
@@ -288,9 +382,9 @@ function filterGraph() {
 
     const tags = project.tags.map((t) => t.toLowerCase());
 
-    const matchesMaterial = !material || tags.includes(material);
-    const matchesYear = !year || tags.includes(year);
-    const matchesCategory = !category || tags.includes(category);
+    const matchesMaterial = !material || tags.includes(material.toLowerCase());
+    const matchesYear = !year || tags.includes(year.toLowerCase());
+    const matchesCategory = !category || tags.includes(category.toLowerCase());
 
     const match = matchesMaterial && matchesYear && matchesCategory;
 
@@ -319,8 +413,27 @@ function filterGraph() {
 
   nodes.update(nodesToUpdate);
 
-  if (matchedNodeIds.length > 0) {
-    groupedMatchingNodes(matchedNodeIds);
+  // Create invisible clustering edges between matched nodes
+  if (matchedNodeIds.length > 1) {
+    const clusterEdges = [];
+    for (let i = 0; i < matchedNodeIds.length; i++) {
+      for (let j = i + 1; j < matchedNodeIds.length; j++) {
+        clusterEdges.push({
+          id: `filter-${matchedNodeIds[i]}-${matchedNodeIds[j]}`,
+          from: matchedNodeIds[i],
+          to: matchedNodeIds[j],
+          color: { color: 'transparent' }, // Invisible
+          width: 0,
+          length: 60, // Shorter = tighter clustering
+          physics: true,
+          smooth: false
+        });
+      }
+    }
+    filterEdges.add(clusterEdges);
+    
+    // Add filter edges to the network
+    edges.add(clusterEdges);
   }
 
   if (firstMatchedNode) {
@@ -332,7 +445,6 @@ function filterGraph() {
     }, 100);
   }
 }
-
 
 // ==============================
 // Modal Setup (unchanged)
@@ -431,7 +543,6 @@ function setupModalEvents() {
   }
 }
 
-
 function closeModalHandler() {
   const bubble = document.getElementById("modal-bubble");
   const iframe = document.getElementById("project-frame");
@@ -453,6 +564,8 @@ function closeModalHandler() {
 // Node Hover Image Setup (NEW)
 // ==============================
 
+let currentHalftoneEffect = null;
+
 function setupNodeHoverImage(projects) {
   network.on("hoverNode", function(params) {
     const nodeId = params.node;
@@ -460,30 +573,79 @@ function setupNodeHoverImage(projects) {
     if (project && project.images && project.images.length > 0) {
       const img = document.getElementById('background-image');
       img.src = project.images[0];
-      img.style.opacity = 0.3;
-      img.style.display = "block"; // <-- Show the image
+      img.style.opacity = 0.5; // Increased opacity for better halftone effect
+      img.style.display = "block";
+      
+      // Apply halftone effect after image loads
+      img.onload = function() {
+        if (currentHalftoneEffect) {
+          currentHalftoneEffect.destroy();
+        }
+        
+        currentHalftoneEffect = new HalftoneEffect(img, {
+          spacing: 20,
+          maxSize: 7,
+          mouseInfluence: 0.0,
+          interactive: true,
+          contrast: .5,
+          threshold: 120,
+          dotColor: document.body.classList.contains('light-mode') ? '#000000' : '#ffffff'
+        });
+      };
     }
   });
 
   network.on("blurNode", function() {
     const img = document.getElementById('background-image');
+    
+    // Clean up halftone effect
+    if (currentHalftoneEffect) {
+      currentHalftoneEffect.destroy();
+      currentHalftoneEffect = null;
+    }
+    
     img.src = "";
     img.style.opacity = 0;
-    img.style.display = "none"; // <-- Hide the image
+    img.style.display = "none";
   });
 }
 
 // ==============================
-// Light Mode Toggle (NEW)
+// Light Mode Toggle (FIXED)
 // ==============================
 
-document.getElementById('toggle-lightmode').addEventListener('change', function(e) {
-  if (e.target.checked) {
+function lightModeHandler(e) {
+  const isLightMode = e.target.checked;
+  
+  if (isLightMode) {
     document.body.classList.add('light-mode');
     setBackgroundLightMode(true);
   } else {
     document.body.classList.remove('light-mode');
     setBackgroundLightMode(false);
   }
-});
+  
+  // Update all node text colors
+  const nodesToUpdate = [];
+  nodes.forEach((node) => {
+    nodesToUpdate.push({
+      id: node.id,
+      font: { 
+        color: isLightMode ? "#000000" : "#ffffff",
+        size: 16,
+        face: "'Arial Black', sans-serif",
+        bold: true
+      }
+    });
+  });
+  nodes.update(nodesToUpdate);
+  
+  // Update halftone dot color if effect is currently active
+  if (currentHalftoneEffect) {
+    currentHalftoneEffect.updateConfig({
+      dotColor: isLightMode ? '#000000' : '#ffffff'
+    });
+  }
+}
 
+document.getElementById('toggle-lightmode').addEventListener('change', lightModeHandler);
