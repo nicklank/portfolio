@@ -420,14 +420,15 @@ body.light-mode .dropdown-option:focus {
    ========================================= */
 @media (max-width: 768px) {
     .dropdown-title {
-        font-size: 2.5em; /* Smaller size for smaller screens */
+        font-size: 2.5em;
     }
 
     #filters {
-        flex-direction: column; /* Stack dropdowns vertically */
+        flex-direction: column;
         gap: 20px;
-        top: 80px; /* Adjust position for smaller screens */
-        align-items: center;
+        top: 80px;
+        left: 20px; /* Keep it left-aligned on mobile too */
+        align-items: flex-start; /* Changed from center to flex-start */
     }
 
     .dropdown select,
@@ -445,7 +446,7 @@ body.light-mode .dropdown-option:focus {
     }
 
     #modal-bubble.expanded {
-        width: 95vw; /* Make modal larger on smaller screens */
+        width: 95vw;
         height: 90vh;
     }
 }
