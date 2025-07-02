@@ -90,26 +90,6 @@ body::before {
     color: #ffffff; /* Lighter color on hover */
 }
 
-/* Hover state for individual letters within the title */
-.dropdown-title:hover span {
-    transform: scale(1.15); /* Make letters bigger on hover */
-    color: #ffffff; /* Ensure individual letters also lighten */
-
-    /* Glitch/Analog Vibes */
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.7), /* Subtle glow */
-                 0 0 10px rgba(0, 255, 255, 0.3); /* Cyan secondary glow */
-    filter: blur(0.2px); /* Very subtle blur for "flicker" */
-    animation: jitter 0.1s infinite alternate; /* Fast, subtle jitter */
-}
-
-/* Define the jitter animation */
-@keyframes jitter {
-    0% { transform: translate(0, 0) scale(1.15); } /* Maintain scaled size */
-    25% { transform: translate(0.5px, -0.5px) scale(1.15); }
-    50% { transform: translate(-0.5px, 0.5px) scale(1.15); }
-    75% { transform: translate(0.5px, 0.5px) scale(1.15); }
-    100% { transform: translate(0, 0) scale(1.15); }
-}
 
 /* Delaying the animation for a "left-to-right" effect */
 /* This part is best handled by JavaScript for dynamic text */
