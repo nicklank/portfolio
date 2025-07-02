@@ -55,7 +55,7 @@ body::before {
 .dropdown-title-wrapper { /* A new wrapper for positioning the title */
     position: absolute;
     top: 20px; /* Adjust as needed for vertical positioning */
-    left: 50%;
+    left: 5%;
     transform: translateX(-50%);
     z-index: 10; /* Make sure it's above the network and background */
     display: inline-block; /* To contain the title text */
