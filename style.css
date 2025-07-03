@@ -50,7 +50,7 @@ body::before {
 }
 
 /* =========================================
-   Dropdown Title (e.g., "FILTERS") - The animated text
+   Dropdown Title (e.g., "") - The animated text
    ========================================= */
 .dropdown-title-wrapper { /* A new wrapper for positioning the title */
     position: absolute;
@@ -108,8 +108,8 @@ body::before {
    ========================================= */
 #filters {
     position: absolute;
-    top: 10%;
-    left: 10%; /* Changed from left: 50% and removed transform */
+    top: 5%;
+    left: 5%; /* Changed from left: 50% and removed transform */
     display: flex;
     gap: 40px;
     z-index: 10;
@@ -423,9 +423,9 @@ body.light-mode .dropdown-option:focus {
 
     #filters {
         flex-direction: row; /* Keep horizontal layout */
-        gap: 15px; /* Reduce gap to fit better on small screens */
-        top: 80px;
-        left: 10px; /* Move closer to left edge on mobile */
+        gap: 17px; /* Reduce gap to fit better on small screens */
+        top: 7%px;
+        left: 3%; /* Move closer to left edge on mobile */
         /* Remove transform to keep them left-aligned */
         flex-wrap: nowrap; /* Prevent wrapping to new lines */
     }
