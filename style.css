@@ -108,8 +108,8 @@ body::before {
    ========================================= */
 #filters {
     position: absolute;
-    top: 100px;
-    left: 20px; /* Changed from left: 50% and removed transform */
+    top: 15%;
+    left: 12%; /* Changed from left: 50% and removed transform */
     display: flex;
     gap: 40px;
     z-index: 10;
@@ -425,9 +425,8 @@ body.light-mode .dropdown-option:focus {
         flex-direction: column;
         gap: 20px;
         top: 80px;
-        left: 50%; /* Center on mobile */
+        left: 10%; /* Center on mobile */
         transform: translateX(-50%); /* Center on mobile */
-        align-items: center; /* Center the stacked items */
     }
 
     .dropdown select,
