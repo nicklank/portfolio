@@ -424,8 +424,8 @@ body.light-mode .dropdown-option:focus {
     #filters {
         flex-direction: row; /* Keep horizontal layout */
         gap: 17px; /* Reduce gap to fit better on small screens */
-        top: 7%px;
-        left: 3%; /* Move closer to left edge on mobile */
+        top: 7%;
+        left: 5%; /* Move closer to left edge on mobile */
         /* Remove transform to keep them left-aligned */
         flex-wrap: nowrap; /* Prevent wrapping to new lines */
     }
@@ -445,7 +445,7 @@ body.light-mode .dropdown-option:focus {
     }
 
     #modal-bubble.expanded {
-        width: 95vw;
-        height: 90vh;
+        width: 80vw;
+        height: 70vh;
     }
 }
