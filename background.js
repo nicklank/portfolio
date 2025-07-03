@@ -115,9 +115,13 @@ function addSubtleFloating() {
 
 // Simple efficient grain specs (replacing the big slow specs)
 function drawAnimatedNoise() {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; // Adjust opacity to taste
+    // Reduce opacity and frequency in light mode
+    const opacity = isLightMode ? 0.05 : 0.15; // Much lower opacity in light mode
+    const frequency = isLightMode ? 20 : 50; // Fewer pixels in light mode
     
-    for (let i = 0; i < 50; i++) { // 50 pixels per frame
+    ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+    
+    for (let i = 0; i < frequency; i++) {
         const x = Math.random() * canvas.width;
         const y = Math.random() * canvas.height;
         // Vary size occasionally for more organic feel
@@ -136,14 +140,19 @@ function drawFineGrain() {
     const imageData = ctx.createImageData(tileSize, tileSize);
     const data = imageData.data;
     
+    // Adjust grain intensity based on mode
+    const grainThreshold = isLightMode ? 0.97 : 0.92; // Less grain in light mode (97% vs 92%)
+    const intensity = isLightMode ? 30 : 60; // Lower intensity in light mode
+    const alpha = isLightMode ? 25 : 60; // Much lower alpha in light mode
+    
     // Generate fine grain pattern
     for (let i = 0; i < data.length; i += 4) {
-        if (Math.random() > 0.92) { // Only 8% of pixels get grain
-            const intensity = Math.random() * 60; // Subtle intensity
-            data[i] = intensity;     // Red
-            data[i + 1] = intensity; // Green  
-            data[i + 2] = intensity; // Blue
-            data[i + 3] = 60;         // Low alpha for subtlety
+        if (Math.random() > grainThreshold) {
+            const grainIntensity = Math.random() * intensity;
+            data[i] = grainIntensity;     // Red
+            data[i + 1] = grainIntensity; // Green  
+            data[i + 2] = grainIntensity; // Blue
+            data[i + 3] = alpha;          // Alpha for subtlety
         }
     }
     
