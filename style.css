@@ -108,8 +108,8 @@ body::before {
    ========================================= */
 #filters {
     position: absolute;
-    top: 15%;
-    left: 12%; /* Changed from left: 50% and removed transform */
+    top: 10%;
+    left: 10%; /* Changed from left: 50% and removed transform */
     display: flex;
     gap: 40px;
     z-index: 10;
@@ -422,16 +422,17 @@ body.light-mode .dropdown-option:focus {
     }
 
     #filters {
-        flex-direction: column;
-        gap: 20px;
+        flex-direction: row; /* Keep horizontal layout */
+        gap: 15px; /* Reduce gap to fit better on small screens */
         top: 80px;
-        left: 10%; /* Center on mobile */
-        transform: translateX(-50%); /* Center on mobile */
+        left: 10px; /* Move closer to left edge on mobile */
+        /* Remove transform to keep them left-aligned */
+        flex-wrap: nowrap; /* Prevent wrapping to new lines */
     }
 
     .dropdown select,
     .dropdown-button {
-        font-size: 16px;
+        font-size: 14px; /* Smaller text for mobile */
     }
     
     .dropdown::after {
