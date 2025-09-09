@@ -22,18 +22,6 @@
         "url": "#"
     },
     {
-        "id": "carbon-clock",
-        "title": "Carbon Clock",
-        "tags": [
-            "physical",
-            "2025",
-            "installation",
-            "metal",
-            "product"
-        ],
-        "url": "#"
-    },
-    {
         "id": "the-collaborator",
         "title": "The Collaborator",
         "tags": [
@@ -74,25 +62,10 @@
         "id": "black-sky-protocol",
         "title": "Black Sky Protocol",
         "tags": [
-            "physical",
-            "2023",
-            "furniture",
+            "digital",
+            "2025",
+            "plastic",
             "product",
-            "wood",
-            "cloth"
-        ],
-        "url": "#"
-    },
-    {
-        "id": "collaborator",
-        "title": "The Collaborator",
-        "tags": [
-            "physical",
-            "2023",
-            "furniture",
-            "product",
-            "wood",
-            "cloth"
         ],
         "url": "#"
     },
@@ -100,12 +73,9 @@
         "id": "design-manifesto",
         "title": "Design Manifesto",
         "tags": [
-            "physical",
+            "digital",
             "2023",
-            "furniture",
-            "product",
-            "wood",
-            "cloth"
+            "graphic",
         ],
         "url": "#"
     },
@@ -128,9 +98,7 @@
         "tags": [
             "physical",
             "2023",
-            "furniture",
             "product",
-            "wood",
             "cloth"
         ],
         "url": "#"
